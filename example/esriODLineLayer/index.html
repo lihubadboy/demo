@@ -1,0 +1,154 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <title>demo</title>
+
+    <link rel="stylesheet" href="http://dev.arcgisonline.cn/jsapi/4.17/esri/css/main.css" type="text/css" />
+    <script type="text/javascript">
+        var dojoConfig = {
+            //baseUrl: "http://localhost/jsapi/4.16/dojo",
+            packages: [{
+                "name": "js",
+                "location": location.pathname.replace(/\/[^/]+$/, "") + "/js"
+            }
+            ]
+        };
+    </script>
+    <script src="./libs/three.js"></script>
+    <script src="./libs/jquery-2.1.1.js"></script>
+
+    <script type="text/javascript" src="https://dev.arcgisonline.cn/jsapi/4.17/init.js"></script>
+    <style>
+        html,
+        body,
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        .funPanel {
+            max-height: 900px;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            z-index: 99;
+            display: flex;
+            flex-direction: column;
+            justify-items: center;
+            flex-wrap: nowrap;
+            overflow-y: auto;
+        }
+
+        .funBtn {
+            padding: 5px 15px;
+            margin: 5px 3px;
+            color: #fff;
+            background-color: cornflowerblue;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* 去掉地图点击蓝色边框 */
+
+        .esri-view .esri-view-surface--inset-outline:focus::after {
+            outline: auto 0px Highlight !important;
+            outline: auto 0px -webkit-focus-ring-color !important;
+        }
+    </style>
+    <script>
+        var view = null;
+        var externalRenderersClass = null;
+        var oDLineLayerRenders = null;
+        require([
+            "esri/Map",
+            "esri/layers/MapImageLayer",
+            "esri/layers/FeatureLayer",
+            "esri/views/SceneView",
+            'esri/views/3d/externalRenderers',
+            'js/esriODLineLayer',
+            'esri/geometry/Point',
+            'esri/tasks/QueryTask',
+            'esri/tasks/support/Query',
+            "esri/layers/GraphicsLayer",
+            "esri/layers/SceneLayer",
+            "esri/Graphic",
+            "dojo/domReady!"
+        ], function (
+            Map,
+            MapImageLayer,
+            FeatureLayer,
+            SceneView,
+            externalRenderers,
+            esriODLineLayer,
+            Point,
+            QueryTask,
+            Query,
+            GraphicsLayer,
+            SceneLayer,
+            Graphic
+        ) {
+                externalRenderersClass = externalRenderers;
+                var baselayer = new MapImageLayer({
+                    url: "https://tjscim.arcgisonline.cn/server/rest/services/ditu20210413/MapServer",
+                });
+                var map = new Map({
+                    layers: [baselayer]
+                });
+                view = new SceneView({
+                    container: "viewDiv",
+                    map: map,
+                    viewingMode: "local",
+                });
+                view.ui.remove("attribution");
+                var feLyr_road = new FeatureLayer({
+                    url: "https://cim69.smartcenter.com/server/rest/services/Hosted/%E6%B5%81%E7%BA%BF/FeatureServer/1"
+                });
+                map.add(feLyr_road);
+                //view加载时
+                view.when(function () {
+                    view.goTo({
+                        tilt:0.49999999991676347,
+                        heading:0,
+                        position: {
+                            x: 152141.94228517977,
+                            y: 301395.5570088102,
+                            z: 42690.15255303347,
+                            spatialReference: {
+                                wkid: 2427
+                            }
+                        }
+                    });
+                    //创建道路飞线
+                    oDLineLayerRenders = new esriODLineLayer(view, {
+                        queryUrl: 'https://cim69.smartcenter.com/server/rest/services/Hosted/%E6%B5%81%E7%BA%BF/FeatureServer/1',
+                        color: "blue",
+                        size: 3.5,//宽度
+                        length: 0.1,//<1
+                        speed: 0.5,//<1
+                        isShow:true,//是否可见道路线
+                    });
+                    externalRenderersClass.add(view, oDLineLayerRenders);
+
+                });
+                view.watch('extent', function () {
+                    console.log(view.camera);
+                })
+                view.on('click', function (evt) {
+                    console.log(evt.mapPoint)
+                })
+            });
+    </script>
+</head>
+
+<body>
+    <div id="viewDiv">
+    </div>
+
+</body>
+
+</html>

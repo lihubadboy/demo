@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>
+      Animate color visual variable | Sample | ArcGIS API for JavaScript 4.16
+    </title>
+
+    <link
+      rel="stylesheet"
+      href="https://dev.arcgisonline.cn/jsapi/4.18/esri/themes/light/main.css"
+    />
+    <script src="https://dev.arcgisonline.cn/jsapi/4.18/init.js"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/layers/FeatureLayer",
+        "esri/layers/TileLayer",
+        "esri/views/MapView",
+        "esri/core/promiseUtils",
+        "esri/core/urlUtils",
+        "esri/Basemap",
+        "esri/widgets/Legend",
+        "esri/widgets/Home",
+        "esri/widgets/Slider",
+        "esri/widgets/Fullscreen",
+        'esri/layers/MapImageLayer',
+        'dojo/domReady!'
+      ], function (
+        Map,
+        FeatureLayer,
+        TileLayer,
+        MapView,
+        promiseUtils,
+        urlUtils,
+        Basemap,
+        Legend,
+        Home,
+        Slider,
+        Fullscreen,
+        MapImageLayer
+      ) {
+        urlUtils.addProxyRule({
+          urlPrefix: "10.254.11.101:8399",
+          proxyUrl: "http://172.31.11.223:8080/Java/proxy.jsp"
+        });
+
+        var layer = new FeatureLayer({
+          url:
+            "https://tjscim.arcgisonline.cn/server/rest/services/Hosted/foorprintMerge13withTime/FeatureServer/0",
+          // definitionExpression: "name_1 > 0",
+          title: "Building Footprints",
+          elevationInfo : {
+      mode: "relative-to-ground",
+      offset: 5,
+      unit: "meters"
+    },
+          outFields: ['*']
+          // minScale: 72223.819286
+        });
+
+        var basemap = new Basemap({
+          baseLayers: [
+          new MapImageLayer({
+              url: "https://tjscim.arcgisonline.cn/server/rest/services/ditu20210413/MapServer",
+              title: "Basemap"
+            })
+          ],
+          title: "basemap",
+          id: "basemap",
+        });
+
+        var map = new Map({
+          basemap: basemap,
+          layers: [layer],
+        });
+
+        var view = new MapView({
+          map: map,
+          container: "viewDiv",
+          resizeAlign: "top-left",
+        });
+
+        //--------------------------------------------------------------------------
+        //
+        //  Setup UI
+        //
+        //--------------------------------------------------------------------------
+
+        var applicationDiv = document.getElementById("applicationDiv");
+        var sliderValue = document.getElementById("sliderValue");
+        var playButton = document.getElementById("playButton");
+        var titleDiv = document.getElementById("titleDiv");
+        var animation = null;
+
+        var startYear = 2008;
+        var endYear = 2020;
+        var months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+        var steps = [];
+        for (var i = startYear; i <= endYear; i++) {
+          months.forEach(function (mm) {
+            steps.push(i * 100 + mm);
+          });
+        }
+
+        var slider = new Slider({
+          container: "slider",
+          min: startYear * 100 + 1,
+          max: endYear * 100 + 12,
+          steps: steps,
+          values: [200801],
+          visibleElements: {
+            rangeLabels: true,
+          },
+        });
+
+        // When user drags the slider:
+        //  - stops the animation
+        //  - set the visualized year to the slider one.
+        function inputHandler(event) {
+          stopAnimation();
+          setYear(event.value);
+        }
+        slider.on("thumb-drag", inputHandler);
+
+        // Toggle animation on/off when user
+        // clicks on the play button
+        playButton.addEventListener("click", function () {
+          if (playButton.classList.contains("toggled")) {
+            stopAnimation();
+          } else {
+            startAnimation();
+          }
+        });
+
+        view.ui.empty("top-left");
+        view.ui.add(titleDiv, "top-left");
+        view.ui.add(
+          new Home({
+            view: view,
+          }),
+          "top-left"
+        );
+        view.ui.add(
+          new Legend({
+            view: view,
+          }),
+          "bottom-left"
+        );
+        view.ui.add(
+          new Fullscreen({
+            view: view,
+            element: applicationDiv,
+          }),
+          "top-right"
+        );
+
+        // When the layerview is available, setup hovering interactivity
+        view.whenLayerView(layer).then(setupHoverTooltip);
+        view.when(function(){
+          // window.view = view;
+          // view.goTo(layer.fullExtent);
+        })
+
+        // Starts the application by visualizing year 1984
+        setYear(startYear * 100 + 1);
+
+        //--------------------------------------------------------------------------
+        //
+        //  Methods
+        //
+        //--------------------------------------------------------------------------
+
+        /**
+         * Sets the current visualized construction year.
+         */
+        function setYear(value) {
+          sliderValue.innerHTML = Math.floor(value);
+          slider.viewModel.setValue(0, value);
+          layer.renderer = createRenderer(value);
+        }
+
+        /**
+         * Returns a renderer with a color visual variable driven by the input
+         * year. The selected year will always render buildings built in that year
+         * with a light blue color. Buildings built 20+ years before the indicated
+         * year are visualized with a pink color. Buildings built within that
+         * 20-year time frame are assigned a color interpolated between blue and pink.
+         */
+        function createRenderer(year) {
+          var opacityStops = [
+            {
+              opacity: 1,
+              value: year,
+            },
+            {
+              opacity: 0,
+              value: year + 1,
+            },
+          ];
+
+          var monthInValue = year % 100;
+          var yearInValue = Math.floor(year / 100);
+          var monthBefore4 = (12 + monthInValue - 4) % 12;
+          var dateTimeBefore4 =
+            (monthBefore4 < monthInValue ? yearInValue : yearInValue - 1) *
+              100 +
+            monthBefore4;
+          var monthBefore9 = (12 + monthInValue - 9) % 12;
+          var dateTimeBefore9 =
+            (monthBefore9 < monthInValue ? yearInValue : yearInValue - 1) *
+              100 +
+            monthBefore9;
+
+          return {
+            type: "simple",
+            symbol: {
+              type: "simple-fill",
+              color: "rgb(0, 0, 0)",
+              outline: null,
+            },
+            visualVariables: [
+              {
+                type: "opacity",
+                valueExpression: "Number($feature.const_time)",
+                stops: opacityStops,
+                legendOptions: {
+                  showLegend: false,
+                },
+              },
+              {
+                type: "color",
+                valueExpression: "Number($feature.const_time)",
+                legendOptions: {
+                  title: "Built:",
+                },
+                stops: [
+                  {
+                    value: year,
+                    color: "#0ff",
+                    label: "in " + Math.floor(year),
+                  },
+                  {
+                    value: dateTimeBefore4,
+                    color: "#f0f",
+                    // color: "#FF1493",
+                    label: "in " + dateTimeBefore4,
+                  },
+                  {
+                    value: dateTimeBefore9,
+                    color: "#C71585",
+                    label: "before " + dateTimeBefore9,
+                  },
+                ],
+              },
+            ],
+          };
+        }
+
+        /**
+         * Sets up a moving tooltip that displays
+         * the construction year of the hovered building.
+         */
+        function setupHoverTooltip(layerview) {
+          var highlight;
+
+          var tooltip = createTooltip();
+
+          var hitTest = promiseUtils.debounce(function (event) {
+            return view.hitTest(event).then(function (hit) {
+              var results = hit.results.filter(function (result) {
+                return result.graphic.layer === layer;
+              });
+
+              if (!results.length) {
+                return null;
+              }
+
+              return {
+                graphic: results[0].graphic,
+                screenPoint: hit.screenPoint,
+              };
+            });
+          });
+
+          view.on("pointer-move", function (event) {
+            return hitTest(event).then(
+              function (hit) {
+                // remove current highlighted feature
+                if (highlight) {
+                  highlight.remove();
+                  highlight = null;
+                }
+
+                // highlight the hovered feature
+                // or hide the tooltip
+                if (hit) {
+                  var graphic = hit.graphic;
+                  var screenPoint = hit.screenPoint;
+
+                  highlight = layerview.highlight(graphic);
+                  tooltip.show(
+                    screenPoint,
+                    "Built in " + graphic.getAttribute("name_1")
+                  );
+                } else {
+                  tooltip.hide();
+                }
+              },
+              function () {}
+            );
+          });
+        }
+
+        /**
+         * Starts the animation that cycle
+         * through the construction years.
+         */
+        function startAnimation() {
+          stopAnimation();
+          animation = animate(slider.values[0]);
+          playButton.classList.add("toggled");
+        }
+
+        /**
+         * Stops the animations
+         */
+        function stopAnimation() {
+          if (!animation) {
+            return;
+          }
+
+          animation.remove();
+          animation = null;
+          playButton.classList.remove("toggled");
+        }
+
+        /**
+         * Animates the color visual variable continously
+         */
+        function animate(startValue) {
+          var animating = true;
+          var value = startValue;
+
+          var frame = function (timestamp) {
+            if (!animating) {
+              return;
+            }
+
+            var valMonth = value % 100;
+            var valYear = Math.floor(value / 100);
+            if (valMonth === 12) {
+              valYear += 1;
+              value = valYear * 100 + 1;
+            } else {
+              value += 1;
+            }
+
+            if (valYear > endYear) {
+              value = startYear * 100 + 1;
+            }
+
+            setYear(value);
+
+            // Update at 30fps
+            setTimeout(function () {
+              requestAnimationFrame(frame);
+            }, 1000 / 10);
+          };
+
+          frame();
+
+          return {
+            remove: function () {
+              animating = false;
+            },
+          };
+        }
+
+        /**
+         * Creates a tooltip to display a the construction year of a building.
+         */
+        function createTooltip() {
+          var tooltip = document.createElement("div");
+          var style = tooltip.style;
+
+          tooltip.setAttribute("role", "tooltip");
+          tooltip.classList.add("tooltip");
+
+          var textElement = document.createElement("div");
+          textElement.classList.add("esri-widget");
+          tooltip.appendChild(textElement);
+
+          view.container.appendChild(tooltip);
+
+          var x = 0;
+          var y = 0;
+          var targetX = 0;
+          var targetY = 0;
+          var visible = false;
+
+          // move the tooltip progressively
+          function move() {
+            x += (targetX - x) * 0.1;
+            y += (targetY - y) * 0.1;
+
+            if (Math.abs(targetX - x) < 1 && Math.abs(targetY - y) < 1) {
+              x = targetX;
+              y = targetY;
+            } else {
+              requestAnimationFrame(move);
+            }
+
+            style.transform =
+              "translate3d(" + Math.round(x) + "px," + Math.round(y) + "px, 0)";
+          }
+
+          return {
+            show: function (point, text) {
+              if (!visible) {
+                x = point.x;
+                y = point.y;
+              }
+
+              targetX = point.x;
+              targetY = point.y;
+              style.opacity = 1;
+              visible = true;
+              textElement.innerHTML = text;
+
+              move();
+            },
+
+            hide: function () {
+              style.opacity = 0;
+              visible = false;
+            },
+          };
+        }
+      });
+    </script>
+
+    <style>
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+      }
+
+      #applicationDiv {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      #viewDiv {
+        width: 100%;
+        height: 100%;
+        flex: 1 1 auto;
+        order: 1;
+      }
+
+      #titleDiv {
+        font-weight: 400;
+        font-style: normal;
+        font-size: 1.2019rem;
+        padding: 10px;
+      }
+
+      #sliderContainer {
+        flex: 0 0 80px;
+        order: 2;
+
+        display: flex;
+        flex-flow: row;
+
+        padding: 0 12px;
+      }
+
+      #sliderValue {
+        flex: 0 0 100px;
+        order: 1;
+
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        text-align: center;
+
+        font-size: 300%;
+      }
+
+      #sliderInnerContainer {
+        flex: 1 1 auto;
+        order: 2;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0 20px;
+      }
+
+      #slider {
+        width: 100%;
+      }
+      /**
+    * Play/Stop toggle button
+    */
+
+      #playButton {
+        flex: 0 0 100px;
+        order: 3;
+
+        margin: 20px 0;
+      }
+
+      .toggle-button {
+        display: flex;
+      }
+
+      .toggle-button.toggled .toggle-button-icon {
+        color: #cc1b1b;
+      }
+
+      .toggle-button .toggle-button-icon {
+        color: #1bcc1b;
+      }
+
+      .toggle-button > :nth-child(2) {
+        display: none;
+      }
+
+      .toggle-button.toggled > :nth-child(1) {
+        display: none;
+      }
+
+      .toggle-button.toggled > :nth-child(2) {
+        display: block;
+      }
+      /**
+      * Hover tooltip
+      */
+
+      .tooltip {
+        position: absolute;
+        pointer-events: none;
+        transition: opacity 200ms;
+      }
+
+      .tooltip > div {
+        margin: 0 auto;
+        padding: 12px;
+        border-radius: 4px;
+        box-shadow: 0px 0px 4px rgba(255, 255, 255, 0.75);
+        transform: translate3d(-50%, -125%, 0);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="applicationDiv">
+      <div id="viewDiv">
+        <div id="titleDiv" class="esri-widget">天津生态城建筑生长</div>
+      </div>
+      <div id="sliderContainer" class="esri-widget">
+        <span id="sliderValue"></span>
+        <div id="sliderInnerContainer">
+          <div id="slider"></div>
+        </div>
+        <div
+          id="playButton"
+          class="esri-widget esri-widget--button toggle-button"
+        >
+          <div>
+            <span
+              class="toggle-button-icon esri-icon-play"
+              aria-label="play icon"
+            ></span>
+            Play
+          </div>
+          <div>
+            <span
+              class="toggle-button-icon esri-icon-pause"
+              aria-label="pause icon"
+            ></span>
+            Pause
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
