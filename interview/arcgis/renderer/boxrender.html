@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<!--  已知底面要素服务，要求点击要素，画出该要素的包围盒 -->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>Intro to FeatureLayer - 4.12</title>
+
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.12/esri/themes/light/main.css"
+    />
+    <script src="https://js.arcgis.com/4.12/"></script>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/views/SceneView",
+        "esri/WebScene",
+        "esri/layers/FeatureLayer"
+      ], function(SceneView, WebScene, FeatureLayer) {
+        const webScene = new WebScene({
+          portalItem: {
+            id: "906a8f1066a44cabad304cb0d0b29b0f",
+            portal: "https://bim.arcgisonline.cn/portal/"
+          }
+        });
+
+        const view = new SceneView({
+          container: "viewDiv",
+          map: webScene
+        });
+        view.popup = null;
+        const boxRenderer = {
+          type: "simple", // autocasts as new UniqueValueRenderer()
+          symbol: {
+            type: "polygon-3d", // autocasts as new PolygonSymbol3D()
+            symbolLayers: [
+              {
+                type: "extrude", // autocasts as new ExtrudeSymbol3DLayer()
+                size: 200,
+                material: {
+                  color: "#15e3e1"
+                },
+                edges: {
+                  type: "solid",
+                  color: "#4d5b18",
+                  size: 1.5
+                }
+              }
+            ]
+          }
+        };
+        // 前端构造FeatureLayer 20190630 wangfh
+        function createFeatureLayerClient(
+          view,
+          graphicsArray,
+          title = "控规高度图层"
+        ) {
+          // 前端构造要素图层，然后使用 标注线 符号 wangfh start;
+          const fieldsArray = [
+            {
+              name: "objectid",
+              alias: "objectid",
+              type: "oid" //可以
+            }
+          ];
+          // 判断是否已经加入了该图层，如果假如，则删除
+          const foundlayer = view.map.layers.find(lyr => {
+            return lyr.title === title;
+          });
+          if (foundlayer) {
+            view.map.remove(foundlayer);
+          }
+
+          const featureLayerLand = new FeatureLayer({
+            title: title,
+            source: graphicsArray, // autocast as an array of esri/Graphic
+            fields: fieldsArray, // 果然是必须要有这个！20190630 21:35 ,可以通过访问图层地址拿到这个数组！
+            objectIdField: "objectid",
+            geometryType: "polygon",
+            // renderer: createBoxRenderer(200),
+            opacity: 0.5,
+            elevationInfo: {
+              mode: "on-the-ground" //这个不会闪。20190630
+            },
+
+            featureReduction: {
+              type: "selection"
+            },
+            visible: true
+          });
+          view.map.add(featureLayerLand);
+          featureLayerLand.renderer = boxRenderer;
+          
+        }
+        view.on("click", function(event) {
+          // Search for graphics at the clicked location. View events can be used
+          // as screen locations as they expose an x,y coordinate that conforms
+          // to the ScreenPoint definition.
+          view.hitTest(event).then(function(response) {
+            var result = response.results[0].graphic;
+
+            if (result) {
+              const graphicsArray = [];
+              graphicsArray.push(result);
+              createFeatureLayerClient(view, graphicsArray);
+            } else {
+              console.log("Did not hit any graphic");
+            }
+          });
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>

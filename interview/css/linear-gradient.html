@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>菜鸟教程(runoob.com)</title>
+    <style>
+      #grad1 {
+        height: 200px;
+        background: -webkit-linear-gradient(red, yellow, blue);
+        /* Safari 5.1 to 6.0 */
+        background: -o-linear-gradient(red, yellow, blue);
+        /* Opera 11.1 to 12.0 */
+        background: -moz-linear-gradient(red, yellow, blue);
+        /* Firefox 3.6 to 15 */
+        background: linear-gradient(red, yellow, blue);
+        /* 标准语法 (必须在最后) */
+      }
+
+      #grad2 {
+        height: 200px;
+        margin-top: 1rem;
+        width: 6rem;
+        height: 3.5rem;
+        background: linear-gradient(
+              to left,
+              rgb(50, 251, 228),
+              rgb(50, 251, 228)
+            )
+            left top no-repeat,
+          linear-gradient(to bottom, rgb(50, 251, 228), rgb(50, 251, 228)) left
+            top no-repeat,
+          linear-gradient(to left, rgb(50, 251, 228), rgb(50, 251, 228)) right
+            top no-repeat,
+          linear-gradient(to bottom, rgb(50, 251, 228), rgb(50, 251, 228)) right
+            top no-repeat,
+          linear-gradient(to left, rgb(50, 251, 228), rgb(50, 251, 228)) left
+            bottom no-repeat,
+          linear-gradient(to bottom, rgb(50, 251, 228), rgb(50, 251, 228)) left
+            bottom no-repeat,
+          linear-gradient(to left, rgb(50, 251, 228), rgb(50, 251, 228)) right
+            bottom no-repeat,
+          linear-gradient(to left, rgb(50, 251, 228), rgb(50, 251, 228)) right
+            bottom no-repeat;
+        background-size: 1.5px 8px, 8px 1.5px, 1.5px 8px, 8px 1.5px;
+        background-color: #364356;
+      }
+
+      #grad4 {
+        width: 100px;
+        height: 100px;
+        border: 10px solid #ddd;
+        border-image: linear-gradient(#ddd, #000) 30 30;
+      }
+
+      #grad5 {
+        height: 200px;
+        margin-top: 1rem;
+        width: 6rem;
+        height: 3.5rem;
+        background: linear-gradient(-45deg, transparent 11px, #0b2b5f 0) right;
+        background-size: 100% 100%;
+        background-repeat: no-repeat;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h3>线性渐变 - 头部到底部</h3>
+    <p>从头部开始的线性渐变，从红色开始，转为黄色，再到蓝色:</p>
+
+    <div id="grad1"></div>
+
+    <div id="grad2"></div>
+    <br />
+    <!-- border 渐变色 -->
+    <div id="grad4"></div>
+
+    <div id="grad5"></div>
+  </body>
+</html>

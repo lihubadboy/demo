@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+    <style>
+      * {
+        margin: 0;
+        border: 0;
+        padding: 0;
+      }
+      .head-photo {
+        margin-top: 100px;
+        margin-left: 100px;
+        position: relative;
+        top: 12px;
+        width: 100px;
+        height: 120px;
+        border: 5px solid green;
+        text-align: center;
+      }
+
+      .upload-file {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        width: 70px;
+        height: 48px;
+        border: 5px solid green;
+        overflow: hidden;
+        filter: alpha(opacity=0);
+        z-index: 15;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="head-photo">
+      <div class="upload-file"></div>
+    </div>
+  </body>
+</html>

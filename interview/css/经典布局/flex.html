@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+    <style>
+      .container {
+        display: flex;
+        min-height: 130px;
+      }
+      .left {
+        order: -1;
+        background: green;
+        flex-basis: 100px;
+      }
+      .main {
+        flex-grow: 1;
+        background-color: blue;
+      }
+      .right {
+        background-color: red;
+        flex-basis: 300px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="main">main</div>
+      <div class="left">left</div>
+      <div class="right">right</div>
+    </div>
+  </body>
+</html>

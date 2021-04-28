@@ -1,0 +1,44 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>CSS3文字逐行向上滚动轮换动画特效</title>
+<head>
+
+</head>
+
+<body>
+
+<style type="text/css">
+.menu-list{list-style:none; width:300px; margin: 100px auto;}
+.menu-list li{display:block;}
+.list{list-style: none; margin-left: -50px;  width:300px; height:240px; overflow:hidden; }
+.list li{width: 300px;height: 60px; position: relative; animation: myfirst 10s infinite ;line-height: 60px;text-align: center; font-size: 30px;color:#fff;}
+@keyframes myfirst
+{
+	0%    {background-color:#4ec7f3;  top:0px;}
+	25%   {background-color:#4ec7f3;  top:-60px;}
+	50%  {background-color:#4ec7f3; top:-120px;}
+	75%  {background-color:#4ec7f3; top:-180px;}
+	100%  {background-color:#4ec7f3; top:-240px;}
+
+}           
+.font30{
+	font-size: 30px;
+	color: #7d7d7d;
+}
+</style>
+<div>
+	<ul class="list">
+		<li class="one">还行</li>
+		<li class="two">该充电</li>
+		<li class="three">学习一下</li>
+		<li class="four">我想一想</li>
+				<li class="one">还行</li>
+		<li class="two">该充电</li>
+		<li class="three">学习一下</li>
+		<li class="four">我想一想</li>
+	</ul>
+</div>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>hyy测试--steps(x)动画渐进效果</title>
+    <meta name="format-detection" content="telephone=no" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <style>
+      body,
+      html {
+        min-width: 320px;
+        max-width: 640px;
+        height: 100%;
+      }
+      @keyframes fadeInOut {
+        0% {
+          opacity: 1;
+        }
+        25% {
+          opacity: 0;
+        }
+        50% {
+          opacity: 0;
+        }
+        75% {
+          opacity: 1;
+        }
+      }
+      .anim_fade_image {
+        position: absolute;
+        animation-name: fadeInOut;
+        animation-timing-function: ease-in-out;
+        animation-iteration-count: infinite;
+        animation-duration: 12s;
+        animation-direction: alternate;
+      }
+    </style>
+  </head>
+  <body>
+    <img
+      class="anim_fade_image "
+      src="https://image.zhangxinxu.com/image/study/p/s200/ps6.jpg"
+    />
+    <!-- <img src="https://image.zhangxinxu.com/image/study/p/s200/ps4.jpg" /> -->
+  </body>
+</html>

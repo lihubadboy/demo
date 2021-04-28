@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script>
+      // width,height,margin,padding,left top都采用了REM
+      function initRem() {
+        let designSize = 1920; // 设计图尺寸
+        let html = document.documentElement;
+        let wW = html.clientWidth; // 窗口宽度
+        let rem = (wW * 100) / designSize;
+        document.documentElement.style.fontSize = rem + "px";
+      }
+      initRem();
+      window.onresize = function() {
+        initRem();
+      };
+    </script>
+    <style>
+      .box {
+        width: 2rem;
+        height: 2rem;
+        background-color: brown;
+      }
+      .word {
+        font-size: 0.16rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <span class="word">你好</span>
+    </div>
+  </body>
+</html>

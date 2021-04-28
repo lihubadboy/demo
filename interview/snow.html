@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta chartset="UTF-8">
+<title></title>
+<meta name="keywords" content="" />
+<meta name="description" content="" />
+<style>
+     *{margin:0; padding:0;}
+     canvas{background:black;}
+</style>
+</head>
+<body>
+      <canvas id="canvas">您的浏览器不支持canvas画布</canvas>
+<script>
+　　var can=document.getElementById('canvas');
+　　var ctx=can.getContext('2d');
+　　var wid=window.innerWidth;
+　　var hei=window.innerHeight;
+　　can.width=wid;
+　　can.height=hei;
+　　var snow=500; //雪花数量
+　　var arr=[]; //保存雪花坐标，半径
+　　for(var i=0; i<snow;i++){
+　　　　arr.push({
+　　　　x:Math.random()*wid,
+　　　　y:Math.random()*hei,
+　　　　r:Math.random()*7
+　　})
+　　}
+function DrawSnow(){
+　　ctx.clearRect(0, 0, wid, hei);
+　　ctx.beginPath();
+　　for(var i=0; i<snow;i++){
+　　　　var p=arr[i];
+　　　　ctx.moveTo(p.x,p.y)
+　　　　ctx.arc(p.x,p.y,p.r,0,2*Math.PI,false)
+　　　　ctx.fillStyle="white";
+}
+　　ctx.fill();
+　　ctx.stroke();
+　　SnowFall()
+　　ctx.closePath();
+}
+//雪花飘落
+function SnowFall(){
+　　for(var i=0; i<snow; i++){
+　　　　var p=arr[i];
+　　　　p.y+=Math.random()*50+1;
+　　　　　　if(p.y>hei){
+　　　　　　　　p.y=0;
+}
+p.x+=Math.random()*50+1;
+　　if(p.x>wid){
+　　　　p.x=0;
+　　}
+  }
+}
+setInterval(DrawSnow, 100);
+</script>
+</body>
+</html>

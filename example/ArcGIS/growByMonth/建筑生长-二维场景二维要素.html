@@ -14,10 +14,9 @@
   <script>
     require([
       "esri/Map",
-      "esri/layers/MapImageLayer",
-      "esri/layers/SceneLayer",
+      "esri/layers/FeatureLayer",
       "esri/layers/TileLayer",
-      "esri/views/SceneView",
+      "esri/views/MapView",
       "esri/core/promiseUtils",
       "esri/core/urlUtils",
       "esri/Basemap",
@@ -25,40 +24,47 @@
       "esri/widgets/Home",
       "esri/widgets/Slider",
       "esri/widgets/Fullscreen",
+      'esri/layers/MapImageLayer',
       'dojo/domReady!'
     ], function (
       Map,
-      MapImageLayer,
-      SceneLayer,
+      FeatureLayer,
       TileLayer,
-      SceneView,
+      MapView,
       promiseUtils,
       urlUtils,
       Basemap,
       Legend,
       Home,
       Slider,
-      Fullscreen
+      Fullscreen,
+      MapImageLayer
     ) {
+      urlUtils.addProxyRule({
+        urlPrefix: "10.254.11.101:8399",
+        proxyUrl: "http://172.31.11.223:8080/Java/proxy.jsp"
+      });
 
-      var layer = new SceneLayer({
-        // URL to the service
-        url: "http://tjscim.arcgisonline.cn/server/rest/services/Hosted/1st1/SceneServer",
-        // url: "http://tjscim.arcgisonline.cn/server/rest/services/Hosted/1st/SceneServer",
+      var layer = new FeatureLayer({
+        url:
+          "https://tjscim.arcgisonline.cn/server/rest/services/Hosted/foorprintMerge13withTime/FeatureServer/0",
+        // definitionExpression: "name_1 > 0",
         title: "Building Footprints",
-
+        elevationInfo: {
+          mode: "relative-to-ground",
+          offset: 5,
+          unit: "meters"
+        },
+        outFields: ['*']
+        // minScale: 72223.819286
       });
 
       var basemap = new Basemap({
         baseLayers: [
           new MapImageLayer({
-            url: "https://cim69.smartcenter.com/server/rest/services/ditu/MapServer",
+            url: "https://tjscim.arcgisonline.cn/server/rest/services/ditu20210413/MapServer",
             title: "Basemap"
-          }),
-          new TileLayer({
-            url: "https://cim69.smartcenter.com/server/rest/services/Hosted/basemapTile04221/MapServer",
-            title: "Basemap1"
-          }),
+          })
         ],
         title: "basemap",
         id: "basemap",
@@ -69,7 +75,7 @@
         layers: [layer],
       });
 
-      var view = new SceneView({
+      var view = new MapView({
         map: map,
         container: "viewDiv",
         resizeAlign: "top-left",
@@ -88,7 +94,7 @@
       var animation = null;
 
       var startYear = 2008;
-      var endYear = 2017;
+      var endYear = 2020;
       var months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
       var steps = [];
       for (var i = startYear; i <= endYear; i++) {
@@ -152,7 +158,7 @@
       // When the layerview is available, setup hovering interactivity
       view.whenLayerView(layer).then(setupHoverTooltip);
       view.when(function () {
-        window.view = view;
+        // window.view = view;
         // view.goTo(layer.fullExtent);
       })
 
@@ -208,21 +214,10 @@
 
         return {
           type: "simple",
-          // symbol: {
-          //   type: "simple-fill",
-          //   color: "rgb(0, 0, 0)",
-          //   outline: null,
-          // },
           symbol: {
-            type: 'mesh-3d', // autocasts as new MeshSymbol3D()
-            symbolLayers: [
-              {
-                type: 'fill', // autocasts as new FillSymbol3DLayer()
-                material: {
-                  color: "rgb(0, 0, 0)",
-                },
-              },
-            ],
+            type: "simple-fill",
+            color: "rgb(0, 0, 0)",
+            outline: null,
           },
           visualVariables: [
             {
@@ -242,21 +237,17 @@
               stops: [
                 {
                   value: year,
-                  // color: "#C6FFDD",
-                 
                   color: "#0ff",
-
                   label: "in " + Math.floor(year),
                 },
                 {
                   value: dateTimeBefore4,
-                  // color: "#FBD786",
-                  color: "#FF1493",
+                  color: "#f0f",
+                  // color: "#FF1493",
                   label: "in " + dateTimeBefore4,
                 },
                 {
                   value: dateTimeBefore9,
-                  // color: "#f7797d",
                   color: "#C71585",
                   label: "before " + dateTimeBefore9,
                 },
@@ -310,7 +301,7 @@
                 highlight = layerview.highlight(graphic);
                 tooltip.show(
                   screenPoint,
-                  "Built in " + graphic.getAttribute("const_time")
+                  "Built in " + graphic.getAttribute("name_1")
                 );
               } else {
                 tooltip.hide();

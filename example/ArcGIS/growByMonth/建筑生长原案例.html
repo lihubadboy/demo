@@ -1,89 +1,62 @@
-<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="initial-scale=1,maximum-scale=1,user-scalable=no"
-    />
-    <title>
-      Animate color visual variable | Sample | ArcGIS API for JavaScript 4.16
-    </title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Animate color visual variable | Sample | ArcGIS API for JavaScript 4.19</title>
 
-    <link
-      rel="stylesheet"
-      href="https://dev.arcgisonline.cn/jsapi/4.18/esri/themes/light/main.css"
-    />
-    <script src="https://dev.arcgisonline.cn/jsapi/4.18/init.js"></script>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.19/esri/themes/dark/main.css" />
+    <script src="https://js.arcgis.com/4.19/"></script>
 
     <script>
       require([
         "esri/Map",
         "esri/layers/FeatureLayer",
-        "esri/layers/TileLayer",
         "esri/views/MapView",
         "esri/core/promiseUtils",
-        "esri/core/urlUtils",
-        "esri/Basemap",
         "esri/widgets/Legend",
         "esri/widgets/Home",
         "esri/widgets/Slider",
-        "esri/widgets/Fullscreen",
-        'esri/layers/MapImageLayer',
-        'dojo/domReady!'
-      ], function (
-        Map,
-        FeatureLayer,
-        TileLayer,
-        MapView,
-        promiseUtils,
-        urlUtils,
-        Basemap,
-        Legend,
-        Home,
-        Slider,
-        Fullscreen,
-        MapImageLayer
-      ) {
-        urlUtils.addProxyRule({
-          urlPrefix: "10.254.11.101:8399",
-          proxyUrl: "http://172.31.11.223:8080/Java/proxy.jsp"
-        });
+        "esri/widgets/Fullscreen"
+      ], function(Map, FeatureLayer, MapView, promiseUtils, Legend, Home, Slider, Fullscreen) {
+        //--------------------------------------------------------------------------
+        //
+        //  Setup Map and View
+        //
+        //--------------------------------------------------------------------------
 
         var layer = new FeatureLayer({
-          url:
-            "https://tjscim.arcgisonline.cn/server/rest/services/Hosted/foorprintMerge13withTime/FeatureServer/0",
-          // definitionExpression: "name_1 > 0",
+          portalItem: {
+            id: "dfe2d606134546f5a712e689d76540ac"
+          },
+          definitionExpression: "CNSTRCT_YR > 0",
           title: "Building Footprints",
-          elevationInfo : {
-      mode: "relative-to-ground",
-      offset: 5,
-      unit: "meters"
-    },
-          outFields: ['*']
-          // minScale: 72223.819286
-        });
-
-        var basemap = new Basemap({
-          baseLayers: [
-          new MapImageLayer({
-              url: "https://tjscim.arcgisonline.cn/server/rest/services/ditu20210413/MapServer",
-              title: "Basemap"
-            })
-          ],
-          title: "basemap",
-          id: "basemap",
+          minScale: 72223.819286,
+          // effect: "bloom(2.5 0 0.5)" // 要素服务光晕效果
         });
 
         var map = new Map({
-          basemap: basemap,
-          layers: [layer],
+          basemap: {
+            portalItem: {
+              id: "4f2e99ba65e34bb8af49733d9778fb8e"
+            }
+          },
+          layers: [layer]
         });
 
         var view = new MapView({
           map: map,
           container: "viewDiv",
-          resizeAlign: "top-left",
+          center: [-73.967569, 40.727724],
+          zoom: 12,
+          constraints: {
+            snapToZoom: false,
+            minScale: 72223.819286
+          },
+          // This ensures that when going fullscreen
+          // The top left corner of the view extent
+          // stays aligned with the top left corner
+          // of the view's container
+          resizeAlign: "top-left"
         });
 
         //--------------------------------------------------------------------------
@@ -98,25 +71,15 @@
         var titleDiv = document.getElementById("titleDiv");
         var animation = null;
 
-        var startYear = 2008;
-        var endYear = 2020;
-        var months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-        var steps = [];
-        for (var i = startYear; i <= endYear; i++) {
-          months.forEach(function (mm) {
-            steps.push(i * 100 + mm);
-          });
-        }
-
         var slider = new Slider({
           container: "slider",
-          min: startYear * 100 + 1,
-          max: endYear * 100 + 12,
-          steps: steps,
-          values: [200801],
+          min: 1880,
+          max: 2017,
+          values: [ 1984 ],
+          step: 1,
           visibleElements: {
-            rangeLabels: true,
-          },
+            rangeLabels: true
+          }
         });
 
         // When user drags the slider:
@@ -130,7 +93,7 @@
 
         // Toggle animation on/off when user
         // clicks on the play button
-        playButton.addEventListener("click", function () {
+        playButton.addEventListener("click", function() {
           if (playButton.classList.contains("toggled")) {
             stopAnimation();
           } else {
@@ -142,33 +105,29 @@
         view.ui.add(titleDiv, "top-left");
         view.ui.add(
           new Home({
-            view: view,
+            view: view
           }),
           "top-left"
         );
         view.ui.add(
           new Legend({
-            view: view,
+            view: view
           }),
           "bottom-left"
         );
         view.ui.add(
           new Fullscreen({
             view: view,
-            element: applicationDiv,
+            element: applicationDiv
           }),
           "top-right"
         );
 
         // When the layerview is available, setup hovering interactivity
         view.whenLayerView(layer).then(setupHoverTooltip);
-        view.when(function(){
-          // window.view = view;
-          // view.goTo(layer.fullExtent);
-        })
 
         // Starts the application by visualizing year 1984
-        setYear(startYear * 100 + 1);
+        setYear(1984);
 
         //--------------------------------------------------------------------------
         //
@@ -196,69 +155,55 @@
           var opacityStops = [
             {
               opacity: 1,
-              value: year,
+              value: year
             },
             {
               opacity: 0,
-              value: year + 1,
-            },
+              value: year + 1
+            }
           ];
-
-          var monthInValue = year % 100;
-          var yearInValue = Math.floor(year / 100);
-          var monthBefore4 = (12 + monthInValue - 4) % 12;
-          var dateTimeBefore4 =
-            (monthBefore4 < monthInValue ? yearInValue : yearInValue - 1) *
-              100 +
-            monthBefore4;
-          var monthBefore9 = (12 + monthInValue - 9) % 12;
-          var dateTimeBefore9 =
-            (monthBefore9 < monthInValue ? yearInValue : yearInValue - 1) *
-              100 +
-            monthBefore9;
 
           return {
             type: "simple",
             symbol: {
               type: "simple-fill",
               color: "rgb(0, 0, 0)",
-              outline: null,
+              outline: null
             },
             visualVariables: [
               {
                 type: "opacity",
-                valueExpression: "Number($feature.const_time)",
+                field: "CNSTRCT_YR",
                 stops: opacityStops,
                 legendOptions: {
-                  showLegend: false,
-                },
+                  showLegend: false
+                }
               },
               {
                 type: "color",
-                valueExpression: "Number($feature.const_time)",
+                field: "CNSTRCT_YR",
                 legendOptions: {
-                  title: "Built:",
+                  title: "Built:"
                 },
                 stops: [
                   {
                     value: year,
                     color: "#0ff",
-                    label: "in " + Math.floor(year),
+                    label: "in " + Math.floor(year)
                   },
                   {
-                    value: dateTimeBefore4,
+                    value: year - 10,
                     color: "#f0f",
-                    // color: "#FF1493",
-                    label: "in " + dateTimeBefore4,
+                    label: "in " + (Math.floor(year) - 20)
                   },
                   {
-                    value: dateTimeBefore9,
-                    color: "#C71585",
-                    label: "before " + dateTimeBefore9,
-                  },
-                ],
-              },
-            ],
+                    value: year - 50,
+                    color: "#404",
+                    label: "before " + (Math.floor(year) - 50)
+                  }
+                ]
+              }
+            ]
           };
         }
 
@@ -271,26 +216,27 @@
 
           var tooltip = createTooltip();
 
-          var hitTest = promiseUtils.debounce(function (event) {
-            return view.hitTest(event).then(function (hit) {
-              var results = hit.results.filter(function (result) {
-                return result.graphic.layer === layer;
+          var hitTest = promiseUtils.debounce(function(event) {
+            return view.hitTest(event)
+              .then(function(hit) {
+                var results = hit.results.filter(function(result) {
+                  return result.graphic.layer === layer;
+                });
+
+                if (!results.length) {
+                  return null;
+                }
+
+                return {
+                  graphic: results[0].graphic,
+                  screenPoint: hit.screenPoint
+                };
               });
-
-              if (!results.length) {
-                return null;
-              }
-
-              return {
-                graphic: results[0].graphic,
-                screenPoint: hit.screenPoint,
-              };
-            });
           });
 
-          view.on("pointer-move", function (event) {
-            return hitTest(event).then(
-              function (hit) {
+          view.on("pointer-move", function(event) {
+            return hitTest(event)
+              .then(function(hit) {
                 // remove current highlighted feature
                 if (highlight) {
                   highlight.remove();
@@ -304,16 +250,11 @@
                   var screenPoint = hit.screenPoint;
 
                   highlight = layerview.highlight(graphic);
-                  tooltip.show(
-                    screenPoint,
-                    "Built in " + graphic.getAttribute("name_1")
-                  );
+                  tooltip.show(screenPoint, "Built in " + graphic.getAttribute("CNSTRCT_YR"));
                 } else {
                   tooltip.hide();
                 }
-              },
-              function () {}
-            );
+              }, function() {});
           });
         }
 
@@ -347,38 +288,30 @@
           var animating = true;
           var value = startValue;
 
-          var frame = function (timestamp) {
+          var frame = function(timestamp) {
             if (!animating) {
               return;
             }
 
-            var valMonth = value % 100;
-            var valYear = Math.floor(value / 100);
-            if (valMonth === 12) {
-              valYear += 1;
-              value = valYear * 100 + 1;
-            } else {
-              value += 1;
-            }
-
-            if (valYear > endYear) {
-              value = startYear * 100 + 1;
+            value += 0.5;
+            if (value > 2017) {
+              value = 1880;
             }
 
             setYear(value);
 
             // Update at 30fps
-            setTimeout(function () {
+            setTimeout(function() {
               requestAnimationFrame(frame);
-            }, 1000 / 10);
+            }, 1000 / 30);
           };
 
           frame();
 
           return {
-            remove: function () {
+            remove: function() {
               animating = false;
-            },
+            }
           };
         }
 
@@ -416,12 +349,11 @@
               requestAnimationFrame(move);
             }
 
-            style.transform =
-              "translate3d(" + Math.round(x) + "px," + Math.round(y) + "px, 0)";
+            style.transform = "translate3d(" + Math.round(x) + "px," + Math.round(y) + "px, 0)";
           }
 
           return {
-            show: function (point, text) {
+            show: function(point, text) {
               if (!visible) {
                 x = point.x;
                 y = point.y;
@@ -436,10 +368,10 @@
               move();
             },
 
-            hide: function () {
+            hide: function() {
               style.opacity = 0;
               visible = false;
-            },
+            }
           };
         }
       });
@@ -569,29 +501,20 @@
   <body>
     <div id="applicationDiv">
       <div id="viewDiv">
-        <div id="titleDiv" class="esri-widget">天津生态城建筑生长</div>
+        <div id="titleDiv" class="esri-widget">New York Construction</div>
       </div>
       <div id="sliderContainer" class="esri-widget">
         <span id="sliderValue"></span>
         <div id="sliderInnerContainer">
           <div id="slider"></div>
         </div>
-        <div
-          id="playButton"
-          class="esri-widget esri-widget--button toggle-button"
-        >
+        <div id="playButton" class="esri-widget esri-widget--button toggle-button">
           <div>
-            <span
-              class="toggle-button-icon esri-icon-play"
-              aria-label="play icon"
-            ></span>
+            <span class="toggle-button-icon esri-icon-play" aria-label="play icon"></span>
             Play
           </div>
           <div>
-            <span
-              class="toggle-button-icon esri-icon-pause"
-              aria-label="pause icon"
-            ></span>
+            <span class="toggle-button-icon esri-icon-pause" aria-label="pause icon"></span>
             Pause
           </div>
         </div>
