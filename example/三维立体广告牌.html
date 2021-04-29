@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>广告牌</title>
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.13/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.13/"></script>
+  <script>
+    var view = null;
+    require([
+      "esri/Map",
+      "esri/views/SceneView",
+      "esri/layers/FeatureLayer"
+    ], function (Map, SceneView, FeatureLayer) {
+      var url = "http://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/LyonPointsOfInterest/FeatureServer";
+      var iconRenderer = {
+        type: "simple",
+        symbol: {
+          type: "point-3d",
+          symbolLayers: [
+            {
+              type: "icon",
+              resource: {
+                href: "./22_02/icon.png"
+              },
+              size: 126,
+              outline: {
+                color: "white",
+                size: 2
+              },
+              anchor: "relative",
+              anchorPosition: {
+                x: 0,
+                y: 0.5
+              }
+            }
+          ],
+        }
+      };
+      var iconLayer = new FeatureLayer({
+        url: url,
+        outFields: ["*"],
+        renderer: iconRenderer,
+        definitionExpression: "Name like 'C%'",
+        elevationInfo: {
+          mode: "relative-to-scene",
+        },
+        labelingInfo: [
+          {
+            labelExpressionInfo: {
+              value: "{Name}"
+            },
+            labelPlacement: "center-center",
+            symbol: {
+              type: "label-3d",
+              symbolLayers: [
+                {
+                  type: "text",
+                  material: {
+                    color: "white",
+                  },
+                  size: 8,
+                },
+              ],
+            }
+          }
+        ]
+      });
+      var map = new Map({
+        basemap: "osm"
+      });
+      map.add(iconLayer);
+      view = new SceneView({
+        container: "viewDiv",
+        map: map,
+        camera: {
+          heading: 357.1330386475522,
+          position: {
+            x: 537815.7369571137,
+            y: 5740921.779769154,
+            z: 423.99590838421136,
+            spatialReference: {
+              wkid: 102100
+            }
+          },
+          tilt: 63.28810945855644
+        },
+      });
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+</body>

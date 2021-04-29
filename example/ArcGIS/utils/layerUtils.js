@@ -2,9 +2,6 @@ import jsapi from '../jsapi';
 import viewUtils from './viewUtils';
 /**
  * 根据图层的title获取图层
- * @author  lee
- * @param {object} view  场景
- * @param {string} title  名称
  */
 function getLayerByTitle(title) {
     const view = await viewUtils.isViewReady();
@@ -13,3 +10,14 @@ function getLayerByTitle(title) {
     });
     return foundLayer;
 }
+
+
+ // 通过某些属性控制图层显示哪些要素
+ const definitonFeatures = async (layer, ids,key) => {
+    const params = ids.map((id) => `'${id}'`);
+    layer.definitionExpression = key + ` in (${params})`;
+ };
+ // 还原原状态
+ const recoveryFeatures = (layer) =>{
+     layer.definitionExpression = '';
+ }

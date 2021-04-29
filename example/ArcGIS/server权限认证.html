@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>只提供生成的token,没有任何弹框形式,访问ArcGIS私有服务</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+    <link rel="stylesheet" href="https://zjehj.com/jsapi/4.15/esri/themes/dark-blue/main.css" />
+    <script src="https://js.arcgis.com/4.15/init.js"></script>
+  
+    <script src="http://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/widgets/LayerList", //图层列表微件
+        "esri/identity/IdentityManager",
+        "esri/layers/MapImageLayer",
+        "esri/Basemap",
+        "dojo/on",
+        "dojo/dom",
+        "dojo/domReady!"
+      ], function(
+        Map,
+        MapView,
+        FeatureLayer,
+        LayerList,
+        IdentityManager,
+        MapImageLayer,
+        Basemap,
+        on,
+        dom
+      ) {
+        //1、创建地图
+    
+        var imgmap = new MapImageLayer({
+          url:  'https://10.254.12.114:6443/arcgis/rest/services/SQEcoMap2020black90/MapServer',
+          title: '天津底图',
+        });
+        var basemap = new Basemap({
+          baseLayers: imgmap,
+          title: '天津底图',
+          id: 'basemap-00',
+        });
+        var map = new Map({
+          basemap: basemap
+        });
+        //2、创建视图
+        var view = new MapView({
+          container: "viewDiv",
+          map: map,
+          zoom: 13,
+          center: [116.38, 39.9]
+        });
+        var featureLayer, featureLayer2;
+        //生成token start
+        var username = "ESRI";
+        var password = "Esri?abc";
+        var portalUrl = "https://10.254.12.114:6443";
+        var tokenDeferred = $.ajax({
+          type: "POST",
+          url: portalUrl + "/arcgis/tokens/generateToken",
+          data: {
+            username: username,
+            password: password,
+            //                    referer: "localhost", // URL of the sending app.
+            referer: 'https://localhost:8080/', // URL of the sending app.
+            expiration: 60, // Lifetime of the token in minutes.
+            f: "json"
+          },
+          dataType: "json" //dataType不能少
+        });
+        if (tokenDeferred) {
+          tokenDeferred
+            // success(function (response) {//jquery 3.x版本 不能用 .success了，要用 .then
+            .then(function(response) {
+              //jquery 3.x版本 不能用 .success了，要用 .then
+              if (response.token) {
+                //成功生成token
+                IdentityManager.registerToken({
+                  server:
+                    "https://10.254.12.114:6443/arcgis/rest/services",
+                  token: response.token
+                });
+                //叠加要素图层 start
+                var featureLayerUrl =
+                  "https://10.254.12.114:6443/arcgis/rest/services/JTJCSS90/MapServer/23";
+                featureLayer = new FeatureLayer({
+                  url: featureLayerUrl,
+                  outFields: ["*"],
+                });
+                map.add(featureLayer); //叠加到地图
+                view.goTo(featureLayer.fullExtent);
+                //叠加要素图层 end
+              }
+            })
+            .fail(function(err) {
+              console.log("操作失败。err:" + err);
+            });
+        }
+        //生成token end
+
+        // 图层列表 start
+        var layerList = new LayerList({
+          view: view
+        });
+        view.ui.add(layerList, {
+          position: "top-right"
+        });
+        // 图层列表 end
+      });
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>

@@ -43,9 +43,9 @@
 
       var layer = new SceneLayer({
         // URL to the service
-        url: "https://cim69.smartcenter.com/server/rest/services/Hosted/1st1/SceneServer",
+        url: "https://cim69.smartcenter.com/server/rest/services/Hosted/1st2/SceneServer",
         title: "Building Footprints",
-
+        outFields: ['*'],
       });
 
       var basemap = new Basemap({
@@ -196,9 +196,9 @@
       function highlightYear(value) {
         let highlight;
         view.whenLayerView(layer).then(function (layerView) {
-          let query = layerView.createQuery();
+          let query = layer.createQuery();
           query.where = "const_time = " + '200801';
-          layerView.queryFeatures(query).then(function (result) {
+          layer.queryFeatures(query).then(function (result) {
             if (highlight) {
               highlight.remove();
             }
