@@ -43,7 +43,7 @@
 
       var layer = new SceneLayer({
         // URL to the service
-        url: "https://cim69.smartcenter.com/server/rest/services/Hosted/1st2/SceneServer",
+        url: "https://tjscim.arcgisonline.cn/server/rest/services/Hosted/%E5%9F%8E%E5%B8%82%E7%94%9F%E9%95%BF1st/SceneServer",
         title: "Building Footprints",
         outFields: ['*'],
       });
@@ -74,7 +74,7 @@
         resizeAlign: "top-left",
         highlightOptions: {
           color: '#0ff',
-          haloColor: '#0ff'
+          haloColor: '#0ff',
         },
         camera: {
           fov: 55,
@@ -194,13 +194,17 @@
       // 高亮该年份的建筑
       let highlight = null;
       function highlightYear(value) {
-        let highlight;
+        // let highlight;
         view.whenLayerView(layer).then(function (layerView) {
           let query = layer.createQuery();
-          query.where = "const_time = " + '200801';
+          query.where = "const_time = '"+value+"'" ;
+          query.outFields=['*'];
+          query.returnGeometry = false;
+
           layer.queryFeatures(query).then(function (result) {
             if (highlight) {
               highlight.remove();
+              highlight = null;
             }
             highlight = layerView.highlight(result.features);
           })

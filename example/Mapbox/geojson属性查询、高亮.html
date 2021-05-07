@@ -1,0 +1,185 @@
+
+<!DOCTYPE html>
+<html>
+ 
+<head>
+    <meta charset="utf-8" />
+    <title>mapbox添加geojson图层实现高亮、属性查询、地图手势变化等功能</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css" rel="stylesheet" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+ 
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+ 
+<body>
+    <div id="map"></div>
+    <script>
+        const existLayersIds = [];
+        // 图层高亮集合
+        let layerHighlights = {};   // {layerId:{id,source},...}
+ 
+        // 图层属性集合
+        let layerProperties = {};   // {layerId:{layerName:'',key1:value1,key2:value2,...}}
+        mapboxgl.accessToken = 'pk.eyJ1IjoibHh0aWFudGlhbiIsImEiOiJjaXd2ZjlkYnQwMTZvMnRtYWZnM2lpbHFvIn0.ef3rFZTr9psmLWahrqap2A';
+
+        var map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/light-v10',
+            center: [-96, 37.8],
+            zoom: 3
+        });
+ 
+        // 添加 point geojson数据图层
+        map.on('load', function () {
+            const layerId = 'layer_geojson_id';
+            const sourceId = 'source_geojson_id';
+            map.addSource(sourceId, {
+                type: 'geojson',
+                data: {
+                    'type': 'FeatureCollection',
+                    'features': [
+                        {
+                            'type': 'Feature',
+                            'geometry': {
+                                'type': 'Point',
+                                'coordinates': [
+                                    -77.03238901390978,
+                                    38.913188059745586
+                                ]
+                            },
+                            'properties': {
+                                'title': 'Mapbox DC'
+                            }
+                        },
+                        {
+                            'type': 'Feature',
+                            'geometry': {
+                                'type': 'Point',
+                                'coordinates': [-122.414, 37.776]
+                            },
+                            'properties': {
+                                'title': 'Mapbox SF'
+                            }
+                        }
+                    ]
+                },
+                generateId: true
+            });
+            map.addLayer({
+                'id': layerId,
+                'source': sourceId,
+                'name': 'dian',
+                'type': 'circle',
+                'paint': {
+                    'circle-radius': 10,
+                    "circle-color": ["case",
+                        ["boolean", ["feature-state", "hover"], false],
+                        `rgb(${255},${0},${0})`,
+                        `rgb(${0},${255},${255})`
+                    ],
+                    'circle-opacity': 1,
+                    'circle-stroke-width': 4,
+                    'circle-stroke-color': `rgb(${0},${0},${255})`,
+                    'circle-stroke-opacity': 1
+                }
+            });
+            changeMapCursor();
+        });
+ 
+        // 实现属性查询及高亮
+        map.on('click', function (e) {
+            // 属性集合清空
+            layerProperties = {};
+            console.log('object', e);
+            const bbox = [
+                [e.point.x - 5, e.point.y - 5],
+                [e.point.x + 5, e.point.y + 5]
+            ];
+            const existLayers = map.getStyle().layers;
+            existLayers.forEach(existLayer => {
+                const existLayerId = existLayer.id;
+                if (existLayerId.includes('layer_geojson')) {
+                    existLayersIds.push(existLayer.id);
+                }
+            });
+            let renderFeatures = map.queryRenderedFeatures(bbox, { layers: existLayersIds });
+            renderFeatures.forEach(renderFeature => {
+                console.log('renderFeature', renderFeature);
+ 
+                const { id, layer, source, properties } = renderFeature;
+                // 属性数据存储
+                layerProperties[layer.id] = properties;
+ 
+                for (let i in layerHighlights) {
+                    // 取消上次高亮
+                    if (i === layer.id) {
+                        const { id, source } = layerHighlights[i];
+                        map.setFeatureState(
+                            { source, id },
+                            { hover: false }
+                        );
+                    }
+                }
+                // 添加新的高亮
+                map.setFeatureState(
+                    { source, id },
+                    { hover: true }
+                );
+ 
+                // 更新图层高亮集合
+                layerHighlights[layer.id] = { id, source };
+            });
+ 
+            const contents = [];
+            for (let i in layerProperties) {
+                const properties = layerProperties[i];
+                for (let p in properties) {
+                    const content = `<p><span>${p}</span>：<span>${properties[p]}</span></p>`
+                    contents.push(content);
+                }
+            }
+ 
+            const propertiesContent = `<h2>标题</h2>${contents.join('')}`;
+ 
+            // 属性展示
+            if (Object.keys(layerProperties).length > 0) {
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(propertiesContent)
+                    .addTo(map);
+            }
+ 
+        });
+ 
+        // 改变地图手势
+        function changeMapCursor() {
+            const layers = map.getStyle().layers;
+            layers.forEach(layer => {
+                const layerId = layer.id;
+                if (layerId.includes('layer_geojson')) {
+                    map.on('mousemove', layerId, function () {
+                        map.getCanvas().style.cursor = 'pointer';
+                    });
+                    map.on('mouseleave', layerId, function (e) {
+                        map.getCanvas().style.cursor = '';
+                    });
+                }
+            });
+        }
+ 
+    </script>
+ 
+</body>
+ 
