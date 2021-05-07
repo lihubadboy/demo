@@ -190,6 +190,7 @@
         slider.viewModel.setValue(0, value);
         layer.renderer = createRenderer(value);
         highlightYear(value);
+        
       }
       // 高亮该年份的建筑
       let highlight = null;
@@ -219,6 +220,7 @@
        * 20-year time frame are assigned a color interpolated between blue and pink.
        */
       function createRenderer(year) {
+        
         var opacityStops = [
           {
             opacity: 1,
