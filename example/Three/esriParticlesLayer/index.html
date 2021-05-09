@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="http://dev.arcgisonline.cn/jsapi/4.17/esri/css/main.css" type="text/css" />
     <script type="text/javascript">
         var dojoConfig = {
-            //baseUrl: "http://localhost/jsapi/4.16/dojo",
             packages: [{
                 "name": "js",
                 "location": location.pathname.replace(/\/[^/]+$/, "") + "/js"
@@ -18,7 +17,10 @@
         };
     </script>
     <script src="./libs/three.js"></script>
+    <script src="./libs/tween.min.js"></script>
     <script src="./libs/jquery-2.1.1.js"></script>
+    <script src="./libs/ParticleSystems.js"></script>
+    <script src="./libs/src_THREE.MeshLine.js"></script>
 
     <script type="text/javascript" src="https://dev.arcgisonline.cn/jsapi/4.17/init.js"></script>
     <style>
@@ -63,90 +65,99 @@
     <script>
         var view = null;
         var externalRenderersClass = null;
-        var oDLineLayerRenders = null;
+        var particlesLayerRenders = null;
+      
         require([
             "esri/Map",
-            "esri/layers/MapImageLayer",
+            "esri/layers/TileLayer",
             "esri/layers/FeatureLayer",
             "esri/views/SceneView",
             'esri/views/3d/externalRenderers',
-            'js/esriODLineLayer',
-            'esri/geometry/Point',
+            'js/esriParticlesLayer',
             'esri/tasks/QueryTask',
             'esri/tasks/support/Query',
-            "esri/layers/GraphicsLayer",
-            "esri/layers/SceneLayer",
-            "esri/Graphic",
             "dojo/domReady!"
         ], function (
             Map,
-            MapImageLayer,
+            TileLayer,
             FeatureLayer,
             SceneView,
             externalRenderers,
-            esriODLineLayer,
-            Point,
+            esriParticlesLayer,
             QueryTask,
             Query,
-            GraphicsLayer,
-            SceneLayer,
-            Graphic
         ) {
                 externalRenderersClass = externalRenderers;
-                var baselayer = new MapImageLayer({
-                    url: "https://tjscim.arcgisonline.cn/server/rest/services/ditu20210413/MapServer",
+                var baselayer = new TileLayer({
+                    url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer",
+                });
+                var xuhuiqulayer = new FeatureLayer({
+                    url: "https://lize.esrish.cn/server/rest/services/Hosted/wallLayer/FeatureServer/0",
+                    title: "xuhuiqu"
                 });
                 var map = new Map({
-                    layers: [baselayer]
+                    layers: [baselayer]//
                 });
+                //map.add(xuhuiqulayer);
                 view = new SceneView({
                     container: "viewDiv",
                     map: map,
-                    viewingMode: "local",
+                    viewingMode: "local"
                 });
                 view.ui.remove("attribution");
-                var feLyr_road = new FeatureLayer({
-                    url: "https://cim69.smartcenter.com/server/rest/services/Hosted/%E6%B5%81%E7%BA%BF/FeatureServer/1"
-                });
-                map.add(feLyr_road);
                 //view加载时
                 view.when(function () {
                     view.goTo({
-                        tilt:0.49999999991676347,
-                        heading:0,
+                        fov: 55,
+                        heading: 358.83617947864354,
                         position: {
-                            x: 152141.94228517977,
-                            y: 301395.5570088102,
-                            z: 42690.15255303347,
+                            x: 13522335.449138768,
+                            y: 3508779.5737503027,
+                            z: 107686.45338745633,
                             spatialReference: {
-                                wkid: 2427
+                                wkid: 102100
                             }
-                        }
+                        },
+                        tilt: 51.78744026248896
                     });
-                    //创建道路飞线
-                    oDLineLayerRenders = new esriODLineLayer(view, {
-                        queryUrl: 'https://cim69.smartcenter.com/server/rest/services/Hosted/%E6%B5%81%E7%BA%BF/FeatureServer/1',
-                        color: "blue",
-                        size: 3.5,//宽度
-                        length: 0.1,//<1
-                        speed: 0.5,//<1
-                        isShow:true,//是否可见道路线
-                    });
-                    externalRenderersClass.add(view, oDLineLayerRenders);
+                    //创建抛物线OD线、点
+                    particlesLayerRenders = new esriParticlesLayer(view, {
+                        startPoint: [13517475.44380141, 3652703.85109271, 10000],
+                        jsonPoints: [
+                            [[13477990.083342908, 3675912.2401699373, 10], [71, 245, 241, 1], [5000, 5000, 1]],
+                            [[13479080.232657738, 3634818.1237781625, 10], [246, 244, 61, 1], [6000, 6000, 1.2]],
+                            [[13526373.309014304, 3613487.526277109, 10], [71, 241, 100, 1], [4000, 4000, 0.8]],
+                            [[13561323.32709677, 3645087.6685865484, 10], [71, 245, 241, 1], [5000, 5000, 1.5]],
+                            [[13547437.351452047, 3669871.6964711742, 10], [0, 155, 255, 1], [5000, 5000, 1.0]],
+                        ]
+                    })
+                    externalRenderersClass.add(view, particlesLayerRenders);
+                    window.view = view;
 
                 });
-                view.watch('extent', function () {
-                    console.log(view.camera);
-                })
-                view.on('click', function (evt) {
-                    console.log(evt.mapPoint)
-                })
             });
+        function funClickEvent(type) {
+            switch (type) {
+                case 'odlineClose':
+                    externalRenderersClass.remove(view, particlesLayerRenders);
+                    break;
+                case 'roadlineOpen':
+                    if (oDLineLayerRenders)
+                        externalRenderersClass.add(view, oDLineLayerRenders);
+                    break;
+               
+            }
+        }
     </script>
 </head>
 
 <body>
     <div id="viewDiv">
+        <div class='funPanel'>
+
+            <span class='funBtn' onmousedown="funClickEvent('odlineOpen')">打开抛物线站点</span>
+            <span class='funBtn' onmousedown="funClickEvent('odlineClose')">关闭抛物线站点</span>
+
     </div>
 
 </body>

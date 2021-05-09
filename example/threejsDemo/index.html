@@ -1,0 +1,380 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <title>demo</title>
+
+    <link rel="stylesheet" href="http://dev.arcgisonline.cn/jsapi/4.17/esri/css/main.css" type="text/css" />
+    <script type="text/javascript">
+        var dojoConfig = {
+            //baseUrl: "http://localhost/jsapi/4.16/dojo",
+            packages: [{
+                "name": "js",
+                "location": location.pathname.replace(/\/[^/]+$/, "") + "/js"
+            }
+            ]
+        };
+    </script>
+    <!-- <script src="./libs/three109.min.js"></script> -->
+    <script src="./libs/three.js"></script>
+    <script src="./libs/tween.min.js"></script>
+    <script src="./libs/jquery-2.1.1.js"></script>
+    <script src="./libs/ParticleSystems.js"></script>
+    <script src="./libs/OutlinePass.js"></script>
+    <!-- <script src="./libs/RenderPass.js"></script>
+    <script src="./libs/ShaderPass.js"></script>
+    <script src="./libs/CopyShader.js"></script>
+    <script src="./libs/EffectComposer.js"></script> -->
+    <script src="./libs/ConvolutionShader.js"></script>
+    <script src="./libs/LuminosityHighPassShader.js"></script>
+    <script src="./libs/BloomPass.js"></script>
+    <script src="./libs/src_THREE.MeshLine.js"></script>
+    <script src="./libs/fatLine.js"></script>
+    <!-- <script src="./libs/lines.js"></script> -->
+
+    <script type="text/javascript" src="https://dev.arcgisonline.cn/jsapi/4.17/init.js"></script>
+    <style>
+        html,
+        body,
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        .funPanel {
+            max-height: 900px;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            z-index: 99;
+            display: flex;
+            flex-direction: column;
+            justify-items: center;
+            flex-wrap: nowrap;
+            overflow-y: auto;
+        }
+
+        .funBtn {
+            padding: 5px 15px;
+            margin: 5px 3px;
+            color: #fff;
+            background-color: cornflowerblue;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* 去掉地图点击蓝色边框 */
+
+        .esri-view .esri-view-surface--inset-outline:focus::after {
+            outline: auto 0px Highlight !important;
+            outline: auto 0px -webkit-focus-ring-color !important;
+        }
+    </style>
+    <script>
+        var view = null;
+        var externalRenderersClass = null;
+        var sphereRenderers = null;
+        var heightRenderers = null;
+        var bloomRenderers = null;
+        var cylinderRenderers = null;
+        var wallRenderersClass = null;
+        var lightBdRenderersClass = null;
+        var bloomBdRenderersClass = null;
+        var pyramidRenderers = null;
+        var pyramidRenderers2 = null;
+        var particlesLayerRenders = null;
+        var oDLineLayerRenders = null;
+        var iconCliderRenders = null;
+        var polygonLineRenders = null;
+        require([
+            "esri/Map",
+            "esri/layers/TileLayer",
+            "esri/layers/FeatureLayer",
+            "esri/views/SceneView",
+            'esri/views/3d/externalRenderers',
+            'js/esriHeightLayer',
+            'js/esriSpereLayer',
+            'js/esriBloomLayer',
+            'js/esriCylinderLayer',
+            'js/esriWallLayer',
+            'js/esriLightBdLayer',
+            'js/esriBloomBdLayer',
+            'js/esriPyramidLayer',
+            'js/esriParticlesLayer',
+            'js/esriODLineLayer',
+            'js/esriIconCliderLayer',
+            'js/esriPolygonLineLayer',
+            'esri/geometry/Point',
+            'esri/tasks/QueryTask',
+            'esri/tasks/support/Query',
+            "esri/layers/GraphicsLayer",
+            "esri/layers/SceneLayer",
+            "esri/Graphic",
+            "dojo/domReady!"
+        ], function (
+            Map,
+            TileLayer,
+            FeatureLayer,
+            SceneView,
+            externalRenderers,
+            esriHeightLayer,
+            esriSpereLayer,
+            esriBloomLayer,
+            esriCylinderLayer,
+            esriWallLayer,
+            esriLightBdLayer,
+            esriBloomBdLayer,
+            esriPyramidLayer,
+            esriParticlesLayer,
+            esriODLineLayer,
+            esriIconCliderLayer,
+            esriPolygonLineLayer,
+            Point,
+            QueryTask,
+            Query,
+            GraphicsLayer,
+            SceneLayer,
+            Graphic
+        ) {
+                externalRenderersClass = externalRenderers;
+                var baselayer = new TileLayer({
+                    //url: "http://10.201.37.222/arcgis/rest/services/shbm/MapServer",
+                    url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer",
+                });
+                var xuhuiqulayer = new FeatureLayer({
+                    url: "https://lize.esrish.cn/server/rest/services/Hosted/wallLayer/FeatureServer/0",
+                    title: "xuhuiqu"
+                });
+                var map = new Map({
+                    layers: [baselayer]//
+                });
+                //map.add(xuhuiqulayer);
+                view = new SceneView({
+                    container: "viewDiv",
+                    map: map,
+                    viewingMode: "local"
+                });
+                view.ui.remove("attribution");
+                //view加载时
+                view.when(function () {
+                    view.goTo({
+                        fov: 55,
+                        heading: 358.83617947864354,
+                        position: {
+                            x: 13522335.449138768,
+                            y: 3508779.5737503027,
+                            z: 107686.45338745633,
+                            spatialReference: {
+                                wkid: 102100
+                            }
+                        },
+                        tilt: 51.78744026248896
+                    });
+                    heightRenderers = new esriHeightLayer(view, {
+                        queryUrl: 'https://esrichina3d.arcgisonline.cn/arcgis/rest/services/Hosted/shanghaishp/FeatureServer/0',
+                        interval: 20,
+                        extrudeField: 'shape_leng',
+                        rgbArray: [255, 0, 0],//渲染颜色值
+                        maxHeight: 3000,
+                        minHeight: 600,
+                        labelField: 'jd_name',
+                    });
+                    //参数生成半球的位置和半径
+                    sphereRenderers = new esriSpereLayer(view, {
+                        position: [13517475.44380141, 3652703.85109271, 100],
+                        radius: 7000,
+                    });
+                    externalRenderersClass.add(view, sphereRenderers);
+                    //中心点位置
+                    cylinderRenderers = new esriCylinderLayer(view, {
+                        position: [13517475.44380141, 3652703.85109271, 100],
+                    });
+                    externalRenderersClass.add(view, cylinderRenderers);
+                    //立体围墙效果
+                    var wallRenderersClass = new esriWallLayer(view, {
+                        queryUrl: 'https://bim.arcgisonline.cn/server/rest/services/Hosted/wallLayer/FeatureServer/0',
+                        height: 2000,
+                    })
+                    externalRenderersClass.add(view, wallRenderersClass);
+                    //建筑高亮
+                    lightBdRenderersClass = new esriLightBdLayer(view, {
+                        queryUrl: 'https://bim.arcgisonline.cn/server/rest/services/Hosted/dmLayer/FeatureServer/0',
+                        height: 5000,
+                    });
+                    externalRenderersClass.add(view, lightBdRenderersClass);
+                    //扫描光圈
+                    bloomBdRenderersClass = new esriBloomBdLayer(view, {
+                        queryUrl: 'https://bim.arcgisonline.cn/server/rest/services/Hosted/dmLayer/FeatureServer/0',
+                        height: 5000,
+                        radius: 12000,
+                        position: [13506515.592777835, 3624388.2495364803, 100],
+                    })
+                    externalRenderersClass.add(view, bloomBdRenderersClass);
+                    //四棱锥1
+                    pyramidRenderers = new esriPyramidLayer(view, {
+                        position: [13529536.50333642, 3626588.0048437016, 500],
+                    });
+                    externalRenderersClass.add(view, pyramidRenderers);
+                    //四棱锥
+                    pyramidRenderers2 = new esriPyramidLayer(view, {
+                        position: [13493621.2254855, 3647407.029471413, 500],
+                    });
+                    externalRenderersClass.add(view, pyramidRenderers2);
+
+                    //创建抛物线OD线、点
+                    particlesLayerRenders = new esriParticlesLayer(view, {
+                        startPoint: [13517475.44380141, 3652703.85109271, 10000],
+                        jsonPoints: [
+                            [[13477990.083342908, 3675912.2401699373, 10], [71, 245, 241, 1], [5000, 5000, 1]],
+                            [[13479080.232657738, 3634818.1237781625, 10], [246, 244, 61, 1], [6000, 6000, 1.2]],
+                            [[13526373.309014304, 3613487.526277109, 10], [71, 241, 100, 1], [4000, 4000, 0.8]],
+                            [[13561323.32709677, 3645087.6685865484, 10], [71, 245, 241, 1], [5000, 5000, 1.5]],
+                            [[13547437.351452047, 3669871.6964711742, 10], [0, 155, 255, 1], [5000, 5000, 1.0]],
+                        ]
+                    })
+                    externalRenderersClass.add(view, particlesLayerRenders);
+
+                    //创建道路飞线
+                    oDLineLayerRenders = new esriODLineLayer(view, {
+                        queryUrl: 'https://bim.arcgisonline.cn/server/rest/services/Hosted/rLineLayer/FeatureServer/0',
+                        color: [230, 94, 27],
+                        length: 100,
+                    });
+                    externalRenderersClass.add(view, oDLineLayerRenders);
+
+                    //创建旋转图标
+                    iconCliderRenders = new esriIconCliderLayer(view, {
+                        icon: 'images/circular2.png',
+                        radius: 3000,
+                        position: [13546596.67216843, 3640096.8349063816, 3000],
+                    });
+                    externalRenderersClass.add(view, iconCliderRenders);
+
+                    //创建缓冲线
+                    polygonLineRenders = new esriPolygonLineLayer(view, {
+                        queryUrl: 'https://bim.arcgisonline.cn/server/rest/services/Hosted/shbjLayer/FeatureServer/0',
+                        width: 2000,
+                    });
+                    externalRenderersClass.add(view, polygonLineRenders);
+
+                    window.view = view;
+
+                });
+                view.watch('extent', function () {
+                    console.log(view.camera);
+                })
+                view.on('click', function (evt) {
+                    console.log(evt.mapPoint)
+                })
+            });
+        function funClickEvent(type) {
+            switch (type) {
+                case 'extrudeOpen':
+                    externalRenderersClass.add(view, heightRenderers);
+                    break;
+                case 'extrudeClose':
+                    externalRenderersClass.remove(view, heightRenderers);
+                    break;
+                case 'sphereOpen':
+                    externalRenderersClass.add(view, sphereRenderers);
+                    break;
+                case 'sphereClose':
+                    externalRenderersClass.remove(view, sphereRenderers);
+                    break;
+                case 'cyliderderOpen':
+                    if (cylinderRenderers)
+                        externalRenderersClass.add(view, cylinderRenderers);
+                    break;
+                case 'cyliderderClose':
+                    externalRenderersClass.remove(view, cylinderRenderers);
+                    break;
+                case 'wallOpen':
+                    if (wallRenderersClass)
+                        externalRenderersClass.add(view, wallRenderersClass);
+                    break;
+                case 'wallClose':
+                    externalRenderersClass.remove(view, wallRenderersClass);
+                    break;
+                case 'bdLightOpen':
+                    if (lightBdRenderersClass)
+                        externalRenderersClass.add(view, lightBdRenderersClass);
+                    break;
+                case 'bdLightClose':
+                    externalRenderersClass.remove(view, lightBdRenderersClass);
+                    break;
+                case 'scanningOpen':
+                    if (bloomBdRenderersClass)
+                        externalRenderersClass.add(view, bloomBdRenderersClass);
+                    break;
+                case 'scanningClose':
+                    externalRenderersClass.remove(view, bloomBdRenderersClass);
+                    break;
+                case 'pyramidOpen':
+                    if (pyramidRenderers && pyramidRenderers2) {
+                        externalRenderersClass.add(view, pyramidRenderers);
+                        externalRenderersClass.add(view, pyramidRenderers2);
+                    }
+                    break;
+                case 'pyramidClose':
+                    externalRenderersClass.remove(view, pyramidRenderers);
+                    externalRenderersClass.remove(view, pyramidRenderers2);
+                    break;
+                case 'odlineOpen':
+                    if (particlesLayerRenders)
+                        externalRenderersClass.add(view, particlesLayerRenders);
+                    break;
+                case 'odlineClose':
+                    externalRenderersClass.remove(view, particlesLayerRenders);
+                    break;
+                case 'roadlineOpen':
+                    if (oDLineLayerRenders)
+                        externalRenderersClass.add(view, oDLineLayerRenders);
+                    break;
+                case 'roadlineClose':
+                    externalRenderersClass.remove(view, oDLineLayerRenders);
+                    break;
+                case 'iconOpen':
+                    if (iconCliderRenders)
+                        externalRenderersClass.add(view, iconCliderRenders);
+                    break;
+                case 'iconClose':
+                    externalRenderersClass.remove(view, iconCliderRenders);
+                    break;
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <div id="viewDiv">
+        <div class='funPanel'>
+            <!-- <span class='funBtn' onmousedown="funClickEvent('extrudeOpen')">面拉伸</span>
+            <span class='funBtn' onmousedown="funClickEvent('extrudeClose')">关闭面拉伸</span> -->
+            <span class='funBtn' onmousedown="funClickEvent('sphereOpen')">打开半球</span>
+            <span class='funBtn' onmousedown="funClickEvent('sphereClose')">关闭半球</span>
+            <span class='funBtn' onmousedown="funClickEvent('cyliderderOpen')">打开柱状光圈</span>
+            <span class='funBtn' onmousedown="funClickEvent('cyliderClose')">关闭柱状光圈</span>
+            <span class='funBtn' onmousedown="funClickEvent('wallOpen')">打开围墙</span>
+            <span class='funBtn' onmousedown="funClickEvent('wallClose')">关闭围墙</span>
+            <span class='funBtn' onmousedown="funClickEvent('bdLightOpen')">打开高亮建筑</span>
+            <span class='funBtn' onmousedown="funClickEvent('bdLightClose')">关闭高亮建筑</span>
+            <span class='funBtn' onmousedown="funClickEvent('scanningOpen')">打开扫描光圈</span>
+            <span class='funBtn' onmousedown="funClickEvent('scanningClose')">关闭扫描光圈</span>
+            <span class='funBtn' onmousedown="funClickEvent('pyramidOpen')">打开四棱锥</span>
+            <span class='funBtn' onmousedown="funClickEvent('pyramidClose')">关闭四棱锥</span>
+            <span class='funBtn' onmousedown="funClickEvent('odlineOpen')">打开抛物线站点</span>
+            <span class='funBtn' onmousedown="funClickEvent('odlineClose')">关闭抛物线站点</span>
+            <span class='funBtn' onmousedown="funClickEvent('roadlineOpen')">打开道路飞线</span>
+            <span class='funBtn' onmousedown="funClickEvent('roadlineClose')">关闭道路飞线</span>
+            <span class='funBtn' onmousedown="funClickEvent('iconOpen')">打开旋转图标</span>
+            <span class='funBtn' onmousedown="funClickEvent('iconClose')">关闭旋转图标</span>
+        </div>
+    </div>
+
+</body>
+
+</html>
