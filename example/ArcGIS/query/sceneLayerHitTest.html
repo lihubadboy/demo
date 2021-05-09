@@ -1,0 +1,116 @@
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Intro to SceneLayer | Sample | ArcGIS API for JavaScript 4.19</title>
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.19/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.19/"></script>
+
+  <script>
+    require(["esri/Map", 
+    "esri/Basemap", 
+    "esri/layers/MapImageLayer",
+    "esri/layers/TileLayer", 
+    "esri/views/SceneView", 
+    "esri/layers/SceneLayer"], (Map, Basemap, MapImageLayer, TileLayer, SceneView, SceneLayer) => {
+
+
+      var basemap = new Basemap({
+        baseLayers: [
+          new MapImageLayer({
+            url: "https://cim69.smartcenter.com/server/rest/services/ditu/MapServer",
+            title: "Basemap"
+          }),
+          new TileLayer({
+            url: "https://cim69.smartcenter.com/server/rest/services/Hosted/basemapTile04221/MapServer",
+            title: "Basemap1"
+          }),
+        ],
+        title: "basemap",
+        id: "basemap",
+      });
+
+      var map = new Map({
+        basemap: basemap,
+      });
+
+      // Create the SceneView
+      const view = new SceneView({
+        container: "viewDiv",
+        map: map,
+        camera: {
+          fov: 55,
+          heading: 338.04854705230866,
+          tilt: 54.90782716152037,
+          position: {
+            x: 165823.61388730974,
+            y: 267293.238351249,
+            z: 25656.86204382505,
+            spatialReference: { wkid: 2427 },
+          },
+        }
+      });
+
+      // Create SceneLayer and add to the map
+      const sceneLayer = new SceneLayer({
+        url: 'https://cim69.smartcenter.com/server/rest/services/Hosted/P1/SceneServer',
+        title: "Building Footprints",
+        outFields: ['*'],
+      });
+      map.add(sceneLayer);
+
+      view.on("immediate-click", function(event) {
+          // get the returned hitTestResult
+          // and draw points on all return mappoints and connect to a line
+          // (using promise chaining for cleaner code and error handling)
+          view
+            .hitTest(event)
+            .then(function(hitTestResult) {
+
+              let lastHit = null;
+              if (hitTestResult.results.length > 0) {
+                lastHit = hitTestResult.results[hitTestResult.results.length - 1];
+                // create point graphic for each hit on objects
+                hitTestResult.results.forEach(function(result, index) {
+                  const hitObject = new Graphic({
+                    geometry: result.mapPoint,
+                    symbol: index === 0 ? firstObjectPointSymbol : objectPointSymbol,
+                  });
+                  view.graphics.add(hitObject);
+
+                  let graphic = result.graphic;
+                  // change the layer to be transparent
+                  graphic.layer.opacity = 0.8;
+                  // highlight the hit object
+                  view.whenLayerView(graphic.layer).then(function(layerView) {
+                    highlightedList.push(layerView.highlight(graphic));
+                  });
+                });
+              }        
+            })
+            .catch(function(error) {
+              console.error(error);
+            });
+        });
+
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+</body>
+
+</html>
