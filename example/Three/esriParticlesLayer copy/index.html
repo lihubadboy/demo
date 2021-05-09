@@ -1,0 +1,222 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <title>demo</title>
+
+    <link rel="stylesheet" href="http://dev.arcgisonline.cn/jsapi/4.17/esri/css/main.css" type="text/css" />
+    <script type="text/javascript">
+        var dojoConfig = {
+            packages: [{
+                "name": "js",
+                "location": location.pathname.replace(/\/[^/]+$/, "") + "/js"
+            }
+            ]
+        };
+    </script>
+    <script src="./libs/three.js"></script>
+    <script src="./libs/jquery-2.1.1.js"></script>
+    <script src="./libs/ParticleSystems.js"></script>
+
+    <script type="text/javascript" src="https://dev.arcgisonline.cn/jsapi/4.17/init.js"></script>
+    <style>
+        html,
+        body,
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        .funPanel {
+            max-height: 900px;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            z-index: 99;
+            display: flex;
+            flex-direction: column;
+            justify-items: center;
+            flex-wrap: nowrap;
+            overflow-y: auto;
+        }
+
+        .funBtn {
+            padding: 5px 15px;
+            margin: 5px 3px;
+            color: #fff;
+            background-color: cornflowerblue;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* 去掉地图点击蓝色边框 */
+
+        .esri-view .esri-view-surface--inset-outline:focus::after {
+            outline: auto 0px Highlight !important;
+            outline: auto 0px -webkit-focus-ring-color !important;
+        }
+    </style>
+    <script>
+        var view = null;
+        var externalRenderersClass = null;
+        var particlesLayerRenders = null;
+
+        require([
+            "esri/Map",
+            "esri/Basemap",
+            "esri/layers/TileLayer",
+            "esri/layers/FeatureLayer",
+            "esri/views/SceneView",
+            'esri/views/3d/externalRenderers',
+            'js/esriParticlesLayer',
+            'esri/tasks/QueryTask',
+            'esri/tasks/support/Query',
+            "dojo/domReady!"
+        ], function (
+            Map,
+            Basemap,
+            TileLayer,
+            FeatureLayer,
+            SceneView,
+            externalRenderers,
+            esriParticlesLayer,
+            QueryTask,
+            Query,
+        ) {
+            externalRenderersClass = externalRenderers;
+
+
+            var basemap = new Basemap({
+                baseLayers: [
+                    new TileLayer({
+                        url: "https://wisehost01.smart-center.com/server/rest/services/Hosted/basemapTile04221/MapServer",
+                        title: "Basemap1"
+                    }),
+                ],
+                title: "basemap",
+                id: "basemap",
+            });
+
+            var featureLayer = new FeatureLayer({
+                title: 'pointLayer',
+                url: 'https://cim69.smartcenter.com/server/rest/services/Hosted/%E6%B5%B7%E7%BB%B5%E9%A1%B9%E7%9B%AE%E7%82%B9/FeatureServer'
+            });
+
+            var map = new Map({
+                basemap: basemap,
+                layers: [featureLayer]
+            });
+
+            // Create the SceneView
+            const view = new SceneView({
+                container: "viewDiv",
+                map: map,
+                viewingMode: "local",
+                camera: {
+                    fov: 55,
+                    heading: 338.04854705230866,
+                    tilt: 54.90782716152037,
+                    position: {
+                        x: 165823.61388730974,
+                        y: 267293.238351249,
+                        z: 25656.86204382505,
+                        spatialReference: { wkid: 2427 },
+                    },
+                }
+            });
+
+            view.ui.remove("attribution");
+            //view加载时
+            view.when(function () {
+
+
+
+                // //创建抛物线OD线、点
+                // particlesLayerRenders = new esriParticlesLayer(view, {
+                //     // 坐标、颜色、角度
+                //     jsonPoints: [
+                //         [[13477990.083342908, 3675912.2401699373, 10], [71, 245, 241, 1], [5000, 5000, 1]],
+                //         [[13479080.232657738, 3634818.1237781625, 10], [246, 244, 61, 1], [6000, 6000, 1.2]],
+                //         [[13526373.309014304, 3613487.526277109, 10], [71, 241, 100, 1], [4000, 4000, 0.8]],
+                //         [[13561323.32709677, 3645087.6685865484, 10], [71, 245, 241, 1], [5000, 5000, 1.5]],
+                //         [[13547437.351452047, 3669871.6964711742, 10], [0, 155, 255, 1], [5000, 5000, 1.0]],
+                //     ]
+                // })
+                // externalRenderersClass.add(view, particlesLayerRenders);
+                // window.view = view;
+
+            });
+
+            view.whenLayerView(featureLayer).then(function (layerView) {
+                layerView.watch("updating", function (value) {
+                    if (!value) {
+                        // wait for the layer view to finish updating
+
+                        // query all the features available for drawing.
+                        layerView
+                            .queryFeatures({
+                                geometry: view.extent,
+                                returnGeometry: true,
+                            })
+                            .then(function (results) {
+                                graphics = results.features;
+
+
+                                const jsonPoints = [];
+
+                                graphics.forEach(function (result, index) {
+                            
+                                        const geometry = result.geometry;
+                                        const point = [[geometry.x, geometry.y, 10], [246, 244, 61, 1], [100, 5000, 1]];
+                                        jsonPoints.push(point);
+
+
+                                });
+                                //创建抛物线OD线、点
+                                particlesLayerRenders = new esriParticlesLayer(view, {
+                                    // 坐标、颜色、角度
+                                    jsonPoints: jsonPoints
+                                })
+                                externalRenderersClass.add(view, particlesLayerRenders);
+
+                            })
+                            .catch(function (error) {
+                                console.error("query failed: ", error);
+                            });
+                    }
+                });
+            });
+
+
+        });
+        function funClickEvent(type) {
+            switch (type) {
+                case 'odlineClose':
+                    externalRenderersClass.remove(view, particlesLayerRenders);
+                    break;
+                case 'odlineOpen':
+                    if (oDLineLayerRenders)
+                        externalRenderersClass.add(view, particlesLayerRenders);
+                    break;
+
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <div id="viewDiv">
+        <div class='funPanel'>
+
+            <span class='funBtn' onmousedown="funClickEvent('odlineOpen')">打开抛物线站点</span>
+            <span class='funBtn' onmousedown="funClickEvent('odlineClose')">关闭抛物线站点</span>
+
+        </div>
+
+</body>
+
+</html>

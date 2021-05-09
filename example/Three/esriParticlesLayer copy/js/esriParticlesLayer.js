@@ -213,21 +213,21 @@ define([
         this.fsbObjs.push(fsbMesh);
 
         //柱体
-        var cyliderGeo = new THREE.CylinderGeometry(30, 300, 15000, 100, 1, true);
-        this.renderObject = this.transparentObject(cyliderGeo, this.getMaterial(color));
-        this.renderObject.rotateX(Math.PI / 2);
-        this.renderObject.position.set(cenP[0], cenP[1], cenP[2]);
-        this.scene.add(this.renderObject);
+        // var cyliderGeo = new THREE.CylinderGeometry(3, 30, 1500, 100, 1, true);
+        // this.renderObject = this.transparentObject(cyliderGeo, this.getMaterial(color));
+        // this.renderObject.rotateX(Math.PI / 2);
+        // this.renderObject.position.set(cenP[0], cenP[1], cenP[2]);
+        // this.scene.add(this.renderObject);
 
         //柱体粒子
-        var lzGeo = new THREE.CylinderGeometry(600, 600, 15000, 100, 1, true);
-        var material = this.getMaterial_par(color);
-        var parObj = this.transparentObject(lzGeo, material);
-        parObj.rotateX(Math.PI / 2);
-        parObj.scale.set(1.5, 1.5, 1);
-        parObj.position.set(cenP[0], cenP[1], cenP[2]);
-        this.scene.add(parObj);
-        this.parObjs.push(parObj);
+        // var lzGeo = new THREE.CylinderGeometry(600, 600, 15000, 100, 1, true);
+        // var material = this.getMaterial_par(color);
+        // var parObj = this.transparentObject(lzGeo, material);
+        // parObj.rotateX(Math.PI / 2);
+        // parObj.scale.set(1.5, 1.5, 1);
+        // parObj.position.set(cenP[0], cenP[1], cenP[2]);
+        // this.scene.add(parObj);
+        // this.parObjs.push(parObj);
       }))
       //context.resetWebGLState();
     },

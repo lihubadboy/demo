@@ -17,10 +17,8 @@
         };
     </script>
     <script src="./libs/three.js"></script>
-    <script src="./libs/tween.min.js"></script>
     <script src="./libs/jquery-2.1.1.js"></script>
     <script src="./libs/ParticleSystems.js"></script>
-    <script src="./libs/src_THREE.MeshLine.js"></script>
 
     <script type="text/javascript" src="https://dev.arcgisonline.cn/jsapi/4.17/init.js"></script>
     <style>
@@ -91,14 +89,10 @@
                 var baselayer = new TileLayer({
                     url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer",
                 });
-                var xuhuiqulayer = new FeatureLayer({
-                    url: "https://lize.esrish.cn/server/rest/services/Hosted/wallLayer/FeatureServer/0",
-                    title: "xuhuiqu"
-                });
                 var map = new Map({
                     layers: [baselayer]//
                 });
-                //map.add(xuhuiqulayer);
+        
                 view = new SceneView({
                     container: "viewDiv",
                     map: map,
@@ -122,7 +116,7 @@
                     });
                     //创建抛物线OD线、点
                     particlesLayerRenders = new esriParticlesLayer(view, {
-                        startPoint: [13517475.44380141, 3652703.85109271, 10000],
+                        // 坐标、颜色、角度
                         jsonPoints: [
                             [[13477990.083342908, 3675912.2401699373, 10], [71, 245, 241, 1], [5000, 5000, 1]],
                             [[13479080.232657738, 3634818.1237781625, 10], [246, 244, 61, 1], [6000, 6000, 1.2]],
@@ -141,9 +135,9 @@
                 case 'odlineClose':
                     externalRenderersClass.remove(view, particlesLayerRenders);
                     break;
-                case 'roadlineOpen':
+                case 'odlineOpen':
                     if (oDLineLayerRenders)
-                        externalRenderersClass.add(view, oDLineLayerRenders);
+                        externalRenderersClass.add(view, particlesLayerRenders);
                     break;
                
             }
