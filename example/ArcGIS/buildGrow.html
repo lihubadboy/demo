@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>建筑生长</title>
+    <link
+      rel="stylesheet"
+      href="https://dev.arcgisonline.cn/jsapi/4.18/esri/themes/light/main.css"
+    />
+    <script src="https://dev.arcgisonline.cn/jsapi/4.18/init.js"></script>
+    <script>
+      require([
+        "esri/Map",
+        "esri/layers/FeatureLayer",
+        "esri/layers/SceneLayer",
+        "esri/layers/TileLayer",
+        "esri/views/SceneView",
+        "esri/core/promiseUtils",
+        "esri/core/urlUtils",
+        "esri/Basemap",
+        "esri/widgets/Slider",
+        "esri/widgets/Fullscreen",
+        "esri/layers/MapImageLayer",
+        "esri/layers/BuildingSceneLayer",
+        "dojo/domReady!",
+      ], function (
+        Map,
+        FeatureLayer,
+        SceneLayer,
+        TileLayer,
+        SceneView,
+        promiseUtils,
+        urlUtils,
+        Basemap,
+        Slider,
+        Fullscreen,
+        MapImageLayer,
+        BuildingSceneLayer
+      ) {
+        var basemap = new Basemap({
+          baseLayers: [
+            new MapImageLayer({
+              url:
+                // "https://cim69.smartcenter.com/server/rest/services/ditu/MapServer",
+                "https://cim69.smartcenter.com/server/rest/services/ditu/MapServer",
+              title: "Basemap",
+            }),
+          ],
+          title: "basemap",
+          id: "basemap",
+        });
+        var initialCamera = {
+          fov: 55,
+          heading: 281.9124658795604,
+          tilt: 79.15415601350122,
+          position: {
+            x: 150544.3166781932,
+            y: 301791.10568924906,
+            z: 141.74911048707358,
+            spatialReference: { wkid: 2427 },
+          },
+        };
+
+        function setSublayerVisiable(layer, showOverView) {
+          showOverView = showOverView || false;
+          if (!layer) return;
+          if (layer.sublayers) {
+            layer.sublayers.forEach(function (sublayer) {
+              if (sublayer.modelName == "Overview") {
+                sublayer.visible = showOverView;
+              } else {
+                sublayer.visible = !showOverView;
+              }
+              if (sublayer.sublayers) {
+                setSublayerVisiable(sublayer, showOverView);
+              }
+            });
+          }
+        }
+
+        function setFullModel(layer, showOverView) {
+          if (layer) {
+            layer.when(() => {
+              setSublayerVisiable(layer, showOverView);
+            });
+          }
+        }
+
+        const url1 =
+          "https://cim69.smartcenter.com/server/rest/services/Hosted/1st1/SceneServer";
+        const layer = new BuildingSceneLayer({
+          url: url1,
+          title: "schoolyard",
+          elevationInfo: {
+            mode: "absolute-height",
+            offset: 1,
+            unit: "meters",
+          },
+        });
+        setFullModel(layer);
+
+        var map = new Map({
+          basemap: basemap,
+        });
+
+        var view = new SceneView({
+          map: map,
+          container: "viewDiv",
+          resizeAlign: "top-left",
+          map: map,
+          ui: {
+            components: [],
+          },
+          popup: {
+            defaultPopupTemplateEnabled: true,
+            collapseEnabled: false,
+            actions: [],
+            // featureNavigationEnabled: false,
+            dockOptions: {
+              buttonEnabled: false,
+            },
+          },
+        });
+
+        //--------------------------------------------------------------------------
+        //
+        //  Setup UI
+        //
+        //--------------------------------------------------------------------------
+
+        var applicationDiv = document.getElementById("applicationDiv");
+        var sliderValue = document.getElementById("sliderValue");
+        var playButton = document.getElementById("playButton");
+        var titleDiv = document.getElementById("titleDiv");
+        var animation = null;
+
+        var startYear = 0;
+        var dataFromJSON = [
+          20200815,
+          20200830,
+          20200915,
+          20200930,
+          20201015,
+          20201030,
+          20201115,
+          20201130,
+          20201215,
+          20201230,
+          20210115,
+          20210130,
+          20210215,
+          20210227,
+          20210315,
+          20210330,
+          20210415,
+          20210430,
+          20210530,
+          20210630,
+          20210730,
+          20210830,
+          20210930,
+          20211030,
+          20211115,
+          20211130,
+          20211215,
+          20211230,
+          20220115,
+          20220125,
+        ];
+
+        var endYear = dataFromJSON.length - 1;
+
+        var slider = new Slider({
+          container: "slider",
+          min: startYear,
+          max: endYear,
+          steps: 1,
+          values: [0],
+          visibleElements: {
+            rangeLabels: true,
+          },
+        });
+
+        function inputHandler(event) {
+          stopAnimation();
+          setYear(event.value);
+        }
+        slider.on("thumb-drag", inputHandler);
+
+        playButton.addEventListener("click", function () {
+          if (playButton.classList.contains("toggled")) {
+            stopAnimation();
+          } else {
+            startAnimation();
+          }
+        });
+
+        view.ui.empty("top-left");
+        view.ui.add(titleDiv, "top-left");
+        view.ui.add(
+          new Fullscreen({
+            view: view,
+            element: applicationDiv,
+          }),
+          "top-right"
+        );
+        view.map.ground.opacity = 0.2;
+        view.map.ground.surfaceColor = "#222328";
+        view.when(function () {
+          view.camera = initialCamera;
+          window.view = view;
+          view.map.add(layer);
+          layer.when(() => {
+            setYear(0);
+          });
+          // view.goTo(layer.fullExtent);
+        });
+
+        // Starts the application by visualizing year 1984
+
+        //--------------------------------------------------------------------------
+        //
+        //  Methods
+        //
+        //--------------------------------------------------------------------------
+
+        function getLayerByTitle(view, title) {
+          const foundLayer = view.map.layers.find((lyr) => {
+            return lyr.title === title;
+          });
+          return foundLayer;
+        }
+
+        function filter(view, layerName, definitionExpression) {
+          const buildingLayer = getLayerByTitle(view, layerName);
+          buildingLayer.outFields = ["*"];
+          console.log(buildingLayer);
+          if (buildingLayer) {
+            let filterExpression = "";
+            // 如果有过滤条件，则通过条件过滤，如果没有则还原到初始状态
+            if (definitionExpression) {
+              filterExpression = definitionExpression;
+            }
+            buildingLayer.visible = true;
+            setFullModel(buildingLayer);
+            // let layers = buildingLayer.allSublayers.toArray();
+            // layers.forEach((l) => {
+            //   l.definitionExpression = filterExpression;
+            // })
+            view
+              .whenLayerView(buildingLayer)
+              .then(function (buildingLayerView) {
+                buildingLayer.visible = true;
+                setFullModel(buildingLayer, false);
+                buildingLayerView.sublayerViews.forEach(function (
+                  sublayerView
+                ) {
+                  console.log(filterExpression);
+                  sublayerView.filter = {
+                    where: filterExpression,
+                  };
+                });
+              });
+          }
+        }
+
+        /**
+         * Sets the current visualized construction year.
+         */
+        function setYear(value) {
+          sliderValue.innerHTML = dataFromJSON[value];
+          slider.viewModel.setValue(0, value);
+          layer.renderer = createRenderer(value);
+        }
+
+        function createRenderer(year) {
+          if (year == 0) {
+            view.map.ground.opacity = 1;
+            view.map.basemap.baseLayers.items.map((item) => {
+              item.opacity = 1;
+            });
+            layer.visible = false;
+            let definitionExpression = "";
+            filter(view, "schoolyard", definitionExpression);
+          } else {
+            view.map.ground.opacity = 0.7;
+            view.map.basemap.baseLayers.items.map((item) => {
+              item.opacity = 0;
+            });
+            layer.visible = true;
+            if (window.view && layer) {
+              if (year == dataFromJSON.length - 1) {
+                let definitionExpression = "";
+                filter(view, "schoolyard", definitionExpression);
+              } else {
+                let definitionExpression =
+                  "time_Converted <= " + dataFromJSON[year];
+                filter(view, "schoolyard", definitionExpression);
+              }
+            }
+          }
+        }
+        /**
+         * Starts the animation that cycle
+         * through the construction years.
+         */
+        function startAnimation() {
+          stopAnimation();
+          animation = animate(slider.values[0]);
+          playButton.classList.add("toggled");
+        }
+
+        /**
+         * Stops the animations
+         */
+        function stopAnimation() {
+          if (!animation) {
+            return;
+          }
+
+          animation.remove();
+          animation = null;
+          playButton.classList.remove("toggled");
+        }
+
+        /**
+         * Animates the color visual variable continously
+         */
+        function animate(startValue) {
+          var animating = true;
+          var value = startValue;
+
+          var frame = function (timestamp) {
+            if (!animating) {
+              return;
+            }
+            var valYear = Math.floor(value);
+            value = valYear + 1;
+            if (valYear + 1 > endYear) {
+              value = 0;
+            }
+            setYear(value);
+
+            // Update at 30fps
+            if (value == 0) {
+              setTimeout(function () {
+                requestAnimationFrame(frame);
+              }, 5000);
+            } else {
+              setTimeout(function () {
+                requestAnimationFrame(frame);
+              }, 1000);
+            }
+          };
+
+          frame();
+
+          return {
+            remove: function () {
+              animating = false;
+            },
+          };
+        }
+        let roamHandle;
+        function roamByHeading(view) {
+          if (roamHandle) {
+            clearInterval(roamHandle);
+            roamHandle = null;
+          } else {
+            roamHandle = setInterval(() => {
+              view.goTo({ heading: view.camera.heading + 0.5 });
+            }, 100);
+          }
+        }
+
+        var funcc = function () {
+          roamByHeading(view);
+        };
+        var aa = document.getElementById("rolldiv");
+        aa.onclick = funcc;
+      });
+    </script>
+
+    <style>
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+      }
+
+      #applicationDiv {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      #viewDiv {
+        width: 100%;
+        height: 100%;
+        flex: 1 1 auto;
+        order: 1;
+      }
+      #rolldiv {
+        position: absolute;
+        left: 16px;
+        top: 74px;
+        height: 100px;
+        width: 100px;
+        background-color: white;
+        z-index: 10;
+        text-align: center;
+        line-height: 100px;
+        cursor: pointer;
+      }
+      #titleDiv {
+        font-weight: 400;
+        font-style: normal;
+        font-size: 1.2019rem;
+        padding: 10px;
+      }
+
+      #sliderContainer {
+        flex: 0 0 80px;
+        order: 2;
+
+        display: flex;
+        flex-flow: row;
+
+        padding: 0 12px;
+      }
+
+      #sliderValue {
+        flex: 0 0 100px;
+        order: 1;
+
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        text-align: center;
+
+        font-size: 16px;
+      }
+
+      #sliderInnerContainer {
+        flex: 1 1 auto;
+        order: 2;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0 20px;
+      }
+
+      #slider {
+        width: 100%;
+      }
+
+      /**
+    * Play/Stop toggle button
+    */
+
+      #playButton {
+        flex: 0 0 100px;
+        order: 3;
+
+        margin: 20px 0;
+      }
+
+      .toggle-button {
+        display: flex;
+      }
+
+      .toggle-button.toggled .toggle-button-icon {
+        color: #cc1b1b;
+      }
+
+      .toggle-button .toggle-button-icon {
+        color: #1bcc1b;
+      }
+
+      .toggle-button > :nth-child(2) {
+        display: none;
+      }
+
+      .toggle-button.toggled > :nth-child(1) {
+        display: none;
+      }
+
+      .toggle-button.toggled > :nth-child(2) {
+        display: block;
+      }
+
+      /**
+      * Hover tooltip
+      */
+
+      .tooltip {
+        position: absolute;
+        pointer-events: none;
+        transition: opacity 200ms;
+      }
+
+      .tooltip > div {
+        margin: 0 auto;
+        padding: 12px;
+        border-radius: 4px;
+        box-shadow: 0px 0px 4px rgba(255, 255, 255, 0.75);
+        transform: translate3d(-50%, -125%, 0);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="applicationDiv">
+      <div id="rolldiv">视角旋转</div>
+      <div id="viewDiv">
+        <div id="titleDiv" class="esri-widget">建筑生长</div>
+      </div>
+      <div id="sliderContainer" class="esri-widget">
+        <span id="sliderValue"></span>
+        <div id="sliderInnerContainer">
+          <div id="slider"></div>
+        </div>
+        <div
+          id="playButton"
+          class="esri-widget esri-widget--button toggle-button"
+        >
+          <div>
+            <span
+              class="toggle-button-icon esri-icon-play"
+              aria-label="play icon"
+            ></span>
+            Play
+          </div>
+          <div>
+            <span
+              class="toggle-button-icon esri-icon-pause"
+              aria-label="pause icon"
+            ></span>
+            Pause
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

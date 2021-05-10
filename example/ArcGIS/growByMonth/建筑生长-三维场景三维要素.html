@@ -54,8 +54,8 @@
             url: "https://cim69.smartcenter.com/server/rest/services/ditu/MapServer",
             title: "Basemap"
           }),
-          new TileLayer({
-            url: "https://cim69.smartcenter.com/server/rest/services/Hosted/basemapTile04221/MapServer",
+          new MapImageLayer({
+            url: "https://wisehost01.smart-center.com/server/rest/services/basemapMapService1/MapServer",
             title: "Basemap1"
           }),
         ],
@@ -189,7 +189,7 @@
         sliderValue.innerHTML = Math.floor(value);
         slider.viewModel.setValue(0, value);
         layer.renderer = createRenderer(value);
-        highlightYear(value);
+        // highlightYear(value);
         
       }
       // 高亮该年份的建筑
@@ -408,7 +408,7 @@
           // Update at 30fps
           setTimeout(function () {
             requestAnimationFrame(frame);
-          }, 1000 / 10);
+          }, 1000 / 20);
         };
 
         frame();

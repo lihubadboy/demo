@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>
+    Animate color visual variable | Sample | ArcGIS API for JavaScript 4.16
+  </title>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.19/esri/themes/dark/main.css" />
+  <script src="https://js.arcgis.com/4.19/"></script>
+
+  <script>
+    require([
+      "esri/Map",
+      "esri/layers/MapImageLayer",
+      "esri/layers/SceneLayer",
+      "esri/layers/TileLayer",
+      "esri/views/SceneView",
+      "esri/core/promiseUtils",
+      "esri/core/urlUtils",
+      "esri/Basemap",
+      "esri/widgets/Legend",
+      "esri/widgets/Home",
+      "esri/widgets/Slider",
+      "esri/widgets/Fullscreen",
+      'dojo/domReady!'
+    ], function (
+      Map,
+      MapImageLayer,
+      SceneLayer,
+      TileLayer,
+      SceneView,
+      promiseUtils,
+      urlUtils,
+      Basemap,
+      Legend,
+      Home,
+      Slider,
+      Fullscreen
+    ) {
+
+      var layer = new SceneLayer({
+        // URL to the service
+        url: "https://wisehost01.smart-center.com/server/rest/services/Hosted/noground0925_nopic/SceneServer",
+        title: "Building Footprints",
+
+        renderer: {
+          type: 'simple',
+          symbol: {
+            type: 'mesh-3d',
+            symbolLayers: [
+              {
+                type: 'fill',
+                material: {
+                  color: [244, 232, 206],
+                  colorMixMode: 'replace',
+                },
+                edges: {
+                  type: 'solid',
+                  color: [244, 232, 206],
+                  size: 1,
+                },
+              },
+            ],
+          },
+        },
+        outFields: ['*'],
+      });
+
+      var hiddenBuildIds= [10999,10998];
+
+      let abc = hiddenBuildIds.map((id) => `${id}`);
+      let filterExpression = `ObjectId not in (${abc})`;
+      layer.definitionExpression = filterExpression;
+
+      var basemap = new Basemap({
+        baseLayers: [
+          new MapImageLayer({
+            url: "https://cim69.smartcenter.com/server/rest/services/ditu/MapServer",
+            title: "Basemap"
+          }),
+          new MapImageLayer({
+            url: "https://wisehost01.smart-center.com/server/rest/services/basemapMapService1/MapServer",
+            title: "Basemap1"
+          }),
+        ],
+        title: "basemap",
+        id: "basemap",
+      });
+
+      var map = new Map({
+        basemap: basemap,
+        layers: [layer],
+      });
+
+      var view = new SceneView({
+        map: map,
+        container: "viewDiv",
+        resizeAlign: "top-left",
+        highlightOptions: {
+          color: '#0ff',
+          haloColor: '#0ff',
+        },
+        camera: {
+          fov: 55,
+          heading: 341.16031503024163,
+          tilt: 45.86065227002578,
+          position: {
+            x: 156300.425811428469,
+            y: 284689.2656129326,
+            z: 15392.919527632894,
+            spatialReference: { wkid: 2427 },
+          },
+        }
+      });
+      window.view = view;
+
+
+      var playButton = document.getElementById("playButton");
+      playButton.addEventListener("click", function () {
+        roamByHeading(view);
+      });
+
+      let roamHandle;
+      function roamByHeading(view) {
+        if (roamHandle) {
+          clearInterval(roamHandle);
+          roamHandle = null;
+        } else {
+          roamHandle = setInterval(() => {
+            view.goTo({ heading: view.camera.heading - 0.1 });
+          }, 100);
+        }
+      }
+
+    });
+  </script>
+
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      margin: 0;
+    }
+
+
+    #viewDiv {
+      width: 100%;
+      height: 100%;
+      flex: 1 1 auto;
+      order: 1;
+    }
+
+    #playButton {
+      font-weight: 400;
+      position: absolute;
+      top:20px;
+      right:20px;
+      font-style: normal;
+      font-size: 1.2019rem;
+      padding: 10px;
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <div id="viewDiv">
+    <div id="playButton" class="esri-widget">环绕</div>
+  </div>
+
+</body>
+
+</html>
