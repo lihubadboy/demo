@@ -5,6 +5,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
     <title>demo</title>
+
+    <link rel="stylesheet" href="http://dev.arcgisonline.cn/jsapi/4.17/esri/css/main.css" type="text/css" />
     <script type="text/javascript">
         var dojoConfig = {
             packages: [{
@@ -16,9 +18,7 @@
     </script>
     <script src="./libs/three.js"></script>
     <script src="./libs/jquery-2.1.1.js"></script>
-    <script src="./libs/ParticleSystems.js"></script>
-    <link rel="stylesheet" href="https://js.arcgis.com/4.19/esri/themes/light/main.css" />
-    <script src="https://js.arcgis.com/4.19/"></script>
+    <script type="text/javascript" src="https://dev.arcgisonline.cn/jsapi/4.17/init.js"></script>
     <style>
         html,
         body,
@@ -61,97 +61,90 @@
     <script>
         var view = null;
         var externalRenderersClass = null;
-        var particlesLayerRenders = null;
+        var wallRenderersClass = null;
 
         require([
             "esri/Map",
-            "esri/Basemap",
             "esri/layers/TileLayer",
             "esri/layers/FeatureLayer",
             "esri/views/SceneView",
             'esri/views/3d/externalRenderers',
-            'js/esriParticlesLayer',
+            'js/esriWallLayer',
+            'esri/geometry/Point',
             'esri/tasks/QueryTask',
             'esri/tasks/support/Query',
+            "esri/layers/GraphicsLayer",
+            "esri/layers/SceneLayer",
+            "esri/Graphic",
             "dojo/domReady!"
         ], function (
             Map,
-            Basemap,
             TileLayer,
             FeatureLayer,
             SceneView,
             externalRenderers,
-            esriParticlesLayer,
+
+            esriWallLayer,
+
+            Point,
             QueryTask,
             Query,
+            GraphicsLayer,
+            SceneLayer,
+            Graphic
         ) {
             externalRenderersClass = externalRenderers;
-
-
-            var basemap = new Basemap({
-                baseLayers: [
-                    new TileLayer({
-                        url: "https://wisehost01.smart-center.com/server/rest/services/Hosted/basemapTileDark/MapServer",
-                        title: "Basemap1"
-                    }),
-                ],
-                title: "basemap",
-                id: "basemap",
+            var baselayer = new TileLayer({
+                url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer",
             });
-
             var map = new Map({
-                basemap: basemap
+                layers: [baselayer]//
             });
-
-            // Create the SceneView
-            const view = new SceneView({
+            view = new SceneView({
                 container: "viewDiv",
                 map: map,
-                viewingMode: "local",
-                camera: {
-                    fov: 55,
-                    heading: 338.04854705230866,
-                    tilt: 54.90782716152037,
-                    position: {
-                        x: 165823.61388730974,
-                        y: 267293.238351249,
-                        z: 25656.86204382505,
-                        spatialReference: { wkid: 2427 },
-                    },
-                }
+                viewingMode: "local"
             });
-
             view.ui.remove("attribution");
             //view加载时
             view.when(function () {
-
-                //创建抛物线OD线、点
-                particlesLayerRenders = new esriParticlesLayer(view, {
-                    // 坐标、颜色、角度
-                    jsonPoints: [
-                        [[146638.44, 298890.47, 10], [71, 245, 241, 1], [1000, 5000, 1]],
-                        [[148517.0, 305255.48, 10], [246, 244, 61, 1], [1000, 6000, 1.2]],
-                        [[151611.11, 304062.04, 10], [71, 241, 100, 1], [1000, 4000, 0.8]],
-                        [[157268.90, 308548.49, 10], [0, 155, 255, 1], [1000, 5000, 1.5]],
-                        // [[13547437.351452047, 3669871.6964711742, 10], [0, 155, 255, 1], [5000, 5000, 1.0]],
-                    ]
+                view.goTo({
+                    fov: 55,
+                    heading: 358.83617947864354,
+                    position: {
+                        x: 13522335.449138768,
+                        y: 3508779.5737503027,
+                        z: 107686.45338745633,
+                        spatialReference: {
+                            wkid: 102100
+                        }
+                    },
+                    tilt: 51.78744026248896
+                });
+                //立体围墙效果
+                var wallRenderersClass = new esriWallLayer(view, {
+                    queryUrl: 'https://bim.arcgisonline.cn/server/rest/services/Hosted/wallLayer/FeatureServer/0',
+                    height: 2000,
                 })
-                externalRenderersClass.add(view, particlesLayerRenders);
+                externalRenderersClass.add(view, wallRenderersClass);
                 window.view = view;
 
             });
-
-
-
+            view.watch('extent', function () {
+                console.log(view.camera);
+            })
+            view.on('click', function (evt) {
+                console.log(evt.mapPoint)
+            })
         });
         function funClickEvent(type) {
             switch (type) {
-                case 'odlineClose':
-                    externalRenderersClass.remove(view, particlesLayerRenders);
+                case 'wallOpen':
+                    if (wallRenderersClass)
+                        externalRenderersClass.add(view, wallRenderersClass);
                     break;
-                case 'odlineOpen':
-                    if (oDLineLayerRenders)
-                        externalRenderersClass.add(view, particlesLayerRenders);
+                case 'wallClose':
+                    externalRenderersClass.remove(view, wallRenderersClass);
                     break;
 
             }
@@ -163,10 +156,11 @@
     <div id="viewDiv">
         <div class='funPanel'>
 
-            <span class='funBtn' onmousedown="funClickEvent('odlineOpen')">打开抛物线站点</span>
-            <span class='funBtn' onmousedown="funClickEvent('odlineClose')">关闭抛物线站点</span>
+            <span class='funBtn' onmousedown="funClickEvent('wallOpen')">打开围墙</span>
+            <span class='funBtn' onmousedown="funClickEvent('wallClose')">关闭围墙</span>
 
         </div>
+    </div>
 
 </body>
 

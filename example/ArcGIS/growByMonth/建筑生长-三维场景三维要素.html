@@ -43,19 +43,20 @@
 
       var layer = new SceneLayer({
         // URL to the service
-        url: "https://tjscim.arcgisonline.cn/server/rest/services/Hosted/%E5%9F%8E%E5%B8%82%E7%94%9F%E9%95%BF1st/SceneServer",
+        url: "https://wisehost01.smart-center.com/server/rest/services/Hosted/cityGrow0512/SceneServer",
         title: "Building Footprints",
         outFields: ['*'],
+        definitionExpression:`const_time !== '')`,
       });
 
       var basemap = new Basemap({
         baseLayers: [
           new MapImageLayer({
-            url: "https://cim69.smartcenter.com/server/rest/services/ditu/MapServer",
+            url: "https://wisehost01.smart-center.com/server/rest/services/ditu/MapServer",
             title: "Basemap"
           }),
-          new MapImageLayer({
-            url: "https://wisehost01.smart-center.com/server/rest/services/basemapMapService1/MapServer",
+          new TileLayer({
+            url: "https://wisehost01.smart-center.com/server/rest/services/Hosted/basemapTileDark/MapServer",
             title: "Basemap1"
           }),
         ],
@@ -105,7 +106,7 @@
       var animation = null;
 
       var startYear = 2008;
-      var endYear = 2017;
+      var endYear = 2035;
       var months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
       var steps = [];
       for (var i = startYear; i <= endYear; i++) {

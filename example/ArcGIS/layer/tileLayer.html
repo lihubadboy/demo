@@ -1,0 +1,81 @@
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Intro to SceneLayer | Sample | ArcGIS API for JavaScript 4.19</title>
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.19/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.19/"></script>
+
+  <script>
+    require(["esri/Map", 
+    "esri/Basemap", 
+    "esri/layers/MapImageLayer",
+    "esri/layers/TileLayer", 
+    "esri/views/SceneView", 
+    "esri/layers/SceneLayer"], (Map, Basemap, MapImageLayer, TileLayer, SceneView, SceneLayer) => {
+
+
+      var basemap = new Basemap({
+        baseLayers: [
+          new MapImageLayer({
+            url: "https://wisehost01.smart-center.com/server/rest/services/ditu/MapServer",
+            title: "Basemap"
+          }),
+          new TileLayer({
+            url: "https://wisehost01.smart-center.com/server/rest/services/Hosted/basemapTileDark/MapServer",
+            title: "Basemap1"
+          }),
+        ],
+        title: "basemap",
+        id: "basemap",
+      });
+
+      var map = new Map({
+        basemap: basemap,
+      });
+
+      // Create the SceneView
+      const view = new SceneView({
+        container: "viewDiv",
+        map: map,
+        camera: {
+          fov: 55,
+          heading: 338.04854705230866,
+          tilt: 54.90782716152037,
+          position: {
+            x: 165823.61388730974,
+            y: 267293.238351249,
+            z: 25656.86204382505,
+            spatialReference: { wkid: 2427 },
+          },
+        }
+      });
+
+      // Create SceneLayer and add to the map
+      const tileLayer = new TileLayer({
+        url: 'https://wisehost01.smart-center.com/server/rest/services/Hosted/空间格局去掉三廊/MapServer',
+        title: "Building Footprints",
+      });
+      map.add(tileLayer);
+
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+</body>
+
+</html>
