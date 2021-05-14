@@ -35,3 +35,8 @@ function highlightYear(value) {
         })
     });
 }
+
+layer.definitionExpression = "mag >= 5";
+layer.definitionExpression = "Sci_Name = 'Ulmus pumila'"
+layer.definitionExpression = "HEIGHT > 50";
+layer.definitionExpression = "usage = 'Residential' AND totalHeight < 5"

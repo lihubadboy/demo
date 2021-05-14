@@ -18,6 +18,7 @@
     </script>
     <script src="./libs/three.js"></script>
     <script src="./libs/jquery-2.1.1.js"></script>
+
     <script type="text/javascript" src="https://dev.arcgisonline.cn/jsapi/4.17/init.js"></script>
     <style>
         html,
@@ -61,16 +62,25 @@
     <script>
         var view = null;
         var externalRenderersClass = null;
+        var sphereRenderers = null;
+        var heightRenderers = null;
+        var bloomRenderers = null;
+        var cylinderRenderers = null;
         var wallRenderersClass = null;
-
+        var lightBdRenderersClass = null;
+        var bloomBdRenderersClass = null;
+        var pyramidRenderers = null;
+        var pyramidRenderers2 = null;
+        var particlesLayerRenders = null;
+        var oDLineLayerRenders = null;
+        var iconCliderRenders = null;
+        var polygonLineRenders = null;
         require([
             "esri/Map",
-            "esri/Basemap",
             "esri/layers/TileLayer",
             "esri/layers/FeatureLayer",
             "esri/views/SceneView",
             'esri/views/3d/externalRenderers',
-            'js/esriWallLayer',
             'js/esriLightBdLayer',
             'esri/geometry/Point',
             'esri/tasks/QueryTask',
@@ -81,12 +91,10 @@
             "dojo/domReady!"
         ], function (
             Map,
-            Basemap,
             TileLayer,
             FeatureLayer,
             SceneView,
             externalRenderers,
-            esriWallLayer,
             esriLightBdLayer,
             Point,
             QueryTask,
@@ -95,81 +103,55 @@
             SceneLayer,
             Graphic
         ) {
-            externalRenderersClass = externalRenderers;
-            var baselayer = new TileLayer({
-                url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer",
-            });
-            var xuhuiqulayer = new FeatureLayer({
-                url: "https://lize.esrish.cn/server/rest/services/Hosted/wallLayer/FeatureServer/0",
-                title: "xuhuiqu"
-            });
-            var basemap = new Basemap({
-                baseLayers: [
-                    new TileLayer({
-                        url: "https://wisehost01.smart-center.com/server/rest/services/Hosted/basemapTileDark/MapServer",
-                        title: "Basemap1"
-                    }),
-                ],
-                title: "basemap",
-                id: "basemap",
-            });
-
-            var map = new Map({
-                basemap: basemap
-            });
-
-            // Create the SceneView
-            const view = new SceneView({
-                container: "viewDiv",
-                map: map,
-                viewingMode: "local",
-                camera: {
-                    fov: 55,
-                    heading: 338.04854705230866,
-                    tilt: 54.90782716152037,
-                    position: {
-                        x: 165823.61388730974,
-                        y: 267293.238351249,
-                        z: 25656.86204382505,
-                        spatialReference: { wkid: 2427 },
-                    },
-                }
-            });
-            // //view加载时
-            view.when(function () {
-
-                //建筑高亮
-                lightBdRenderersClass = new esriLightBdLayer(view, {
-                    queryUrl: 'http://wisehost01.smart-center.com/server/rest/services/Hosted/一捅到底的biubiu特效/FeatureServer/0',
-                    height: 5000,
+                externalRenderersClass = externalRenderers;
+                var baselayer = new TileLayer({
+                    url: "http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer",
                 });
-                externalRenderersClass.add(view, lightBdRenderersClass);
+                var map = new Map({
+                    basemap:'osm',
+                    layers: [baselayer]//
+                });
+                view = new SceneView({
+                    container: "viewDiv",
+                    map: map,
+                    viewingMode: "local"
+                });
+                view.ui.remove("attribution");
+                //view加载时
+                view.when(function () {
+                    view.goTo({
+                        fov: 55,
+                        heading: 358.83617947864354,
+                        position: {
+                            x: 13522335.449138768,
+                            y: 3508779.5737503027,
+                            z: 107686.45338745633,
+                            spatialReference: {
+                                wkid: 102100
+                            }
+                        },
+                        tilt: 51.78744026248896
+                    });
+            
+                    //建筑高亮
+                    lightBdRenderersClass = new esriLightBdLayer(view, {
+                        queryUrl: 'https://bim.arcgisonline.cn/server/rest/services/Hosted/dmLayer/FeatureServer/0',
+                        height: 5000,
+                    });
+                    externalRenderersClass.add(view, lightBdRenderersClass);
 
-                //立体围墙效果
-                // var wallRenderersClass = new esriWallLayer(view, {
-                //     queryUrl: 'http://wisehost01.smart-center.com/server/rest/services/Hosted/一捅到底/FeatureServer/1',
-                //     height: 500,
-                // });
-                // externalRenderersClass.add(view, wallRenderersClass);
-                // window.view = view;
+                    window.view = view;
 
+                });
+                view.watch('extent', function () {
+                    console.log(view.camera);
+                })
+                view.on('click', function (evt) {
+                    console.log(evt.mapPoint)
+                })
             });
-            view.watch('extent', function () {
-                console.log(view.camera);
-            })
-            view.on('click', function (evt) {
-                console.log(evt.mapPoint)
-            })
-        });
         function funClickEvent(type) {
             switch (type) {
-                case 'wallOpen':
-                    if (wallRenderersClass)
-                        externalRenderersClass.add(view, wallRenderersClass);
-                    break;
-                case 'wallClose':
-                    externalRenderersClass.remove(view, wallRenderersClass);
-                    break;
                 case 'bdLightOpen':
                     if (lightBdRenderersClass)
                         externalRenderersClass.add(view, lightBdRenderersClass);
@@ -177,7 +159,6 @@
                 case 'bdLightClose':
                     externalRenderersClass.remove(view, lightBdRenderersClass);
                     break;
-
             }
         }
     </script>
@@ -186,10 +167,8 @@
 <body>
     <div id="viewDiv">
         <div class='funPanel'>
-
-            <span class='funBtn' onmousedown="funClickEvent('wallOpen')">打开围墙</span>
-            <span class='funBtn' onmousedown="funClickEvent('wallClose')">关闭围墙</span>
-
+            <span class='funBtn' onmousedown="funClickEvent('bdLightOpen')">打开高亮建筑</span>
+            <span class='funBtn' onmousedown="funClickEvent('bdLightClose')">关闭高亮建筑</span>
         </div>
     </div>
 
