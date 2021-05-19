@@ -1,0 +1,96 @@
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Query features from a FeatureLayer | Sample | ArcGIS API for JavaScript 4.19</title>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.19/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.19/"></script>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    #query {
+      cursor: pointer;
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: coral;
+      width: 100px;
+      height: 50px;
+    }
+  </style>
+
+  <script>
+    require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/layers/FeatureLayer",
+    ], function (Map, MapView, FeatureLayer) {
+
+      var quakesUrl =
+        "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/ks_earthquakes_since_2000/FeatureServer/0";
+
+      // historic earthquakes
+      var quakesLayer = new FeatureLayer({
+        url: quakesUrl,
+        outFields: ["*"],
+        visible: true
+      });
+
+      var map = new Map({
+        basemap: "dark-gray-vector",
+        layers: [quakesLayer]
+      });
+
+      var view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [-97.75188, 37.23308],
+        zoom: 9,
+        popup: {
+          defaultPopupTemplateEnabled: true, // 自动创建要素图层的popuptemplate
+          collapseEnabled: false,
+          autoOpenEnabled: true,
+          actions: [],
+          dockOptions: {
+            buttonEnabled: false,
+          },
+        },
+      });
+
+
+      var queryQuakes = document.getElementById("query");
+      queryQuakes.addEventListener("click", async function () {
+        const results = await queryEarthquakes();
+        console.log(results);
+      });
+
+      function queryEarthquakes() {
+        var query = quakesLayer.createQuery();
+        // 查询所有元素
+        query.returnGeometry = false; // 是否返回geometry
+        return quakesLayer.queryFeatures(query);
+
+        // query.where = "mag >= " + magSlider.values[0];
+      }
+
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv">
+    <button id="query">查询</button>
+  </div>
+</body>
+
+</html>

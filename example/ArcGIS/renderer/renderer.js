@@ -39,10 +39,10 @@ const getPictureMakerSymbol = (url, width, height) => {
 
 //  给要素添加三维符号的时候
 //  如果要素文字符号化 不随屏幕大小调整  featurelayer.screenSizePerspectiveEnabled = false;
-//  如果要素服务symbol 随视角变化 需要将要素拔高
+//  如果要素服务symbol 随视角变化 需要将要素拔高 并将 elevationInfo 设置为 relative-to-scene
 const layer = {
   elevationInfo: {
-    mode: 'absolute-height',
+    mode: 'relative-to-scene',
     offset: 12,
     unit: 'meters'
   },

@@ -1,0 +1,87 @@
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Query features from a FeatureLayer | Sample | ArcGIS API for JavaScript 4.19</title>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.19/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.19/"></script>
+
+    <style>
+        html,
+        body,
+        #viewDiv {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #query {
+            cursor: pointer;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: coral;
+            width: 100px;
+            height: 50px;
+        }
+    </style>
+
+    <script>
+        require([
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/layers/FeatureLayer",
+            "esri/tasks/QueryTask",
+            "esri/tasks/support/Query"
+        ], function (Map, MapView, FeatureLayer, QueryTask, Query) {
+
+            var map = new Map({
+                basemap: "dark-gray-vector",
+            });
+
+            var view = new MapView({
+                container: "viewDiv",
+                map: map,
+                center: [-97.75188, 37.23308],
+                zoom: 9,
+            });
+
+
+            var queryQuakes = document.getElementById("query");
+
+            queryQuakes.addEventListener("click", async function () {
+
+                for (i = 2; i < 9; i++) {
+                    const url = 'https://wisehost01.smart-center.com/server/rest/services/%E7%AE%A1%E7%BA%BF0517%E5%8A%A8%E6%80%81%E6%9C%8D%E5%8A%A1/MapServer/';
+                    const res = await queryFeatures(url + i);
+                    if (res && res.features.length > 0) {
+                        break;
+                    }
+                }
+            });
+
+            function queryFeatures(url) {
+                var queryTask = new QueryTask({
+                    url: url
+                });
+                var query = new Query();
+                query.where = "FileName = 'LDHT1440145_LDHT1440146.obj'";
+                query.returnGeometry = false;
+                query.outFields = ["*"];
+                return queryTask.execute(query);
+            }
+
+        });
+    </script>
+</head>
+
+<body>
+    <div id="viewDiv">
+        <button id="query">查询</button>
+    </div>
+</body>
+
+</html>
